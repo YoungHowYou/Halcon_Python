@@ -1,0 +1,378 @@
+Py_Initialize <- CPy_Initialize[:::]
+short.german
+  Python-Interpreter initialisieren.;
+short.english
+  Initialize the embedded Python interpreter.;
+module
+  foundation;
+chapter.german
+  BenutzerErweiterungen;
+chapter.english
+  UserExtensions;
+keywords.english
+  python, initialize;
+parallelization
+  process_exclusively: true;
+  process_locally:     false;
+  process_mutual:      false;
+  method:              none;
+
+
+Py_Finalize <- CPy_Finalize[:::]
+short.german
+  Python-Interpreter beenden.;
+short.english
+  Finalize the embedded Python interpreter.;
+module
+  foundation;
+chapter.german
+  BenutzerErweiterungen;
+chapter.english
+  UserExtensions;
+keywords.english
+  python, finalize;
+parallelization
+  process_exclusively: true;
+  process_locally:     false;
+  process_mutual:      false;
+  method:              none;
+
+
+Py_EvalString <- CPy_EvalString[::PyCode:]
+short.german
+  Python-Code ausfuehren.;
+short.english
+  Execute a Python code string in the interpreter.;
+module
+  foundation;
+chapter.german
+  BenutzerErweiterungen;
+chapter.english
+  UserExtensions;
+keywords.english
+  python, eval, code, exec, string;
+parallelization
+  process_exclusively: false;
+  process_locally:     false;
+  process_mutual:      false;
+  method:              none;
+parameter
+  PyCode:             input_control;
+  default_type:       string;
+  multivalue:         false;
+  sem_type:           string;
+  type_list:          string;
+
+
+Py_Import <- CPy_Import[::ModuleName:]
+short.german
+  Python-Modul importieren.;
+short.english
+  Import a Python module into the interpreter namespace.;
+module
+  foundation;
+chapter.german
+  BenutzerErweiterungen;
+chapter.english
+  UserExtensions;
+keywords.english
+  python, import, module;
+parallelization
+  process_exclusively: false;
+  process_locally:     false;
+  process_mutual:      false;
+  method:              none;
+parameter
+  ModuleName:         input_control;
+  default_type:       string;
+  multivalue:         false;
+  sem_type:           string;
+  type_list:          string;
+
+
+Py_SetScalar <- CPy_SetScalar[::Name,Value:]
+short.german
+  Skalarvariable in Python setzen.;
+short.english
+  Set a scalar variable (int / float / string) in the Python interpreter.;
+module
+  foundation;
+chapter.german
+  BenutzerErweiterungen;
+chapter.english
+  UserExtensions;
+keywords.english
+  python, set, scalar, variable;
+parallelization
+  process_exclusively: false;
+  process_locally:     false;
+  process_mutual:      false;
+  method:              none;
+parameter
+  Name:               input_control;
+  default_type:       string;
+  multivalue:         false;
+  sem_type:           string;
+  type_list:          string;
+parameter
+  Value:              input_control;
+  default_type:       real;
+  multivalue:         false;
+  sem_type:           number;
+  type_list:          real, integer, string;
+
+
+Py_GetScalar <- CPy_GetScalar[::Name:Value]
+short.german
+  Skalarvariable aus Python lesen.;
+short.english
+  Get a scalar variable from the Python interpreter.;
+module
+  foundation;
+chapter.german
+  BenutzerErweiterungen;
+chapter.english
+  UserExtensions;
+keywords.english
+  python, get, scalar, variable;
+parallelization
+  process_exclusively: false;
+  process_locally:     false;
+  process_mutual:      false;
+  method:              none;
+parameter
+  Name:               input_control;
+  default_type:       string;
+  multivalue:         false;
+  sem_type:           string;
+  type_list:          string;
+parameter
+  Value:              output_control;
+  default_type:       real;
+  multivalue:         false;
+  sem_type:           number;
+  type_list:          real, integer, string;
+
+
+Py_SetArray <- CPy_SetArray[::M,N,Name,VAL:]
+short.german
+  Matrix-Variable in Python als numpy-Array setzen.;
+short.english
+  Set an M x N matrix in the Python interpreter as a numpy array.;
+module
+  foundation;
+chapter.german
+  BenutzerErweiterungen;
+chapter.english
+  UserExtensions;
+keywords.english
+  python, set, matrix, array, numpy;
+parallelization
+  process_exclusively: false;
+  process_locally:     false;
+  process_mutual:      false;
+  method:              none;
+parameter
+  M:                  input_control;
+  default_type:       integer;
+  multivalue:         false;
+  sem_type:           number;
+  type_list:          integer;
+parameter
+  N:                  input_control;
+  default_type:       integer;
+  multivalue:         false;
+  sem_type:           number;
+  type_list:          integer;
+parameter
+  Name:               input_control;
+  default_type:       string;
+  multivalue:         false;
+  sem_type:           string;
+  type_list:          string;
+parameter
+  VAL:                input_control;
+  default_type:       real;
+  multivalue:         true;
+  sem_type:           number;
+  type_list:          real;
+
+
+Py_GetArray <- CPy_GetArray[::Name:M,N,VAL]
+short.german
+  Numpy-Array aus Python als Matrix lesen.;
+short.english
+  Get a numpy array from the Python interpreter and return its shape and flat values.;
+module
+  foundation;
+chapter.german
+  BenutzerErweiterungen;
+chapter.english
+  UserExtensions;
+keywords.english
+  python, get, matrix, array, numpy;
+parallelization
+  process_exclusively: false;
+  process_locally:     false;
+  process_mutual:      false;
+  method:              none;
+parameter
+  Name:               input_control;
+  default_type:       string;
+  multivalue:         false;
+  sem_type:           string;
+  type_list:          string;
+parameter
+  M:                  output_control;
+  default_type:       integer;
+  multivalue:         false;
+  sem_type:           integer;
+  type_list:          integer;
+parameter
+  N:                  output_control;
+  default_type:       integer;
+  multivalue:         false;
+  sem_type:           integer;
+  type_list:          integer;
+parameter
+  VAL:                output_control;
+  default_type:       real;
+  multivalue:         true;
+  sem_type:           real;
+  type_list:          real;
+
+
+Py_SetVariable <- CPy_SetVariable[::DictHandle:]
+short.german
+  HALCON-Matrizen-Dict an Python als numpy-Arrays uebergeben.;
+short.english
+  Pass HALCON matrix handles stored in a dict to Python as numpy arrays.;
+module
+  foundation;
+chapter.german
+  BenutzerErweiterungen;
+chapter.english
+  UserExtensions;
+keywords.english
+  python, set, variable, matrix, dict, handle;
+parallelization
+  process_exclusively: false;
+  process_locally:     false;
+  process_mutual:      false;
+  method:              none;
+parameter
+  DictHandle:         input_control;
+  default_type:       handle;
+  multivalue:         false;
+  sem_type:           handle;
+  type_list:          handle;
+
+
+Py_GetVariable <- CPy_GetVariable[::DictHandle:]
+short.german
+  Python numpy-Arrays als HALCON-Matrizen in Dict zurueckschreiben.;
+short.english
+  Read numpy arrays from Python and write them as HALCON matrix handles into a dict.;
+module
+  foundation;
+chapter.german
+  BenutzerErweiterungen;
+chapter.english
+  UserExtensions;
+keywords.english
+  python, get, variable, matrix, dict, handle;
+parallelization
+  process_exclusively: false;
+  process_locally:     false;
+  process_mutual:      false;
+  method:              none;
+parameter
+  DictHandle:         input_control;
+  default_type:       handle;
+  multivalue:         false;
+  sem_type:           handle;
+  type_list:          handle;
+
+
+Py_GetOutput <- CPy_GetOutput[::Size:Output]
+short.german
+  Python-Standardausgabe-Puffer lesen.;
+short.english
+  Read (and clear) the Python stdout capture buffer.;
+module
+  foundation;
+chapter.german
+  BenutzerErweiterungen;
+chapter.english
+  UserExtensions;
+keywords.english
+  python, output, buffer, stdout, print;
+parallelization
+  process_exclusively: false;
+  process_locally:     false;
+  process_mutual:      false;
+  method:              none;
+parameter
+  Size:               input_control;
+  default_type:       integer;
+  multivalue:         false;
+  sem_type:           number;
+  type_list:          integer;
+parameter
+  Output:             output_control;
+  default_type:       string;
+  multivalue:         false;
+  sem_type:           string;
+  type_list:          string;
+
+
+Py_SetImage <- CPy_SetImage[::DictHandle:]
+short.german
+  HALCON-Bilder als numpy-Arrays an Python uebergeben.;
+short.english
+  Pass HALCON images stored in a dict to Python as numpy arrays (via ctypes, zero-copy read).;
+module
+  foundation;
+chapter.german
+  BenutzerErweiterungen;
+chapter.english
+  UserExtensions;
+keywords.english
+  python, set, image, numpy, opencv, dict, transfer;
+parallelization
+  process_exclusively: false;
+  process_locally:     false;
+  process_mutual:      false;
+  method:              none;
+parameter
+  DictHandle:         input_control;
+  default_type:       handle;
+  multivalue:         false;
+  sem_type:           handle;
+  type_list:          handle;
+
+
+Py_GetImage <- CPy_GetImage[::DictHandle:]
+short.german
+  Python numpy-Arrays als HALCON-Bilder in Dict zurueckschreiben.;
+short.english
+  Read numpy arrays from Python and write them as HALCON image objects into a dict.;
+module
+  foundation;
+chapter.german
+  BenutzerErweiterungen;
+chapter.english
+  UserExtensions;
+keywords.english
+  python, get, image, numpy, opencv, dict, transfer;
+parallelization
+  process_exclusively: false;
+  process_locally:     false;
+  process_mutual:      false;
+  method:              none;
+parameter
+  DictHandle:         input_control;
+  default_type:       handle;
+  multivalue:         false;
+  sem_type:           handle;
+  type_list:          handle;

@@ -1,0 +1,30 @@
+# CMake
+CMakeLists.txt.user
+CMakeCache.txt
+CMakeFiles/
+CMakeScripts/
+Testing/
+Makefile
+cmake_install.cmake
+install_manifest.txt
+compile_commands.json
+CTestTestfile.cmake
+_deps/
+CMakeUserPresets.json
+
+# Build output
+build/
+bin/
+
+# MSVC
+*.pdb
+*.ilk
+*.exp
+*.obj
+
+# Windows
+Thumbs.db
+Desktop.ini
+
+# Debug log written by the extension at runtime
+hp_debug.log

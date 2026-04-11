@@ -1,0 +1,14 @@
+{
+    "files.associations": {
+        "*.md": "bat",
+        "halcon.h": "c",
+        "halconcpp.h": "c",
+        "system_error": "cpp",
+        "type_traits": "cpp",
+        "xlocmon": "cpp",
+        "xtr1common": "cpp",
+        "xutility": "cpp",
+        "halcon_python.h": "c",
+        "xlocale": "cpp"
+    }
+}

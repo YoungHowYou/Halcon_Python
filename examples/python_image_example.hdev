@@ -1,0 +1,101 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<hdevelop file_version="1.2" halcon_version="24.11.1.0">
+<procedure name="main">
+<interface/>
+<body>
+<c>* ============================================================</c>
+<c>* HALCON Python Extension — image transfer example</c>
+<c>*</c>
+<c>* Shows how to send images to Python (OpenCV) and receive</c>
+<c>* the processed results back as HALCON image objects.</c>
+<c>*</c>
+<c>* Py_SetImage  — HALCON image  →  Python numpy array (BGR / gray)</c>
+<c>* Py_GetImage  — Python numpy  →  HALCON image object</c>
+<c>*</c>
+<c>* Channel conventions:</c>
+<c>*   single-channel  →  numpy shape (H, W),      dtype matches pixel type</c>
+<c>*   3-channel color →  numpy shape (H, W, 3),   BGR order (OpenCV)</c>
+<c>* ============================================================</c>
+<c></c>
+<l>dev_get_window (WindowHandle)</l>
+<c></c>
+<c>* --- 1. Load a test colour image ---</c>
+<l>read_image (Image, 'fabrik')</l>
+<l>get_image_size (Image, Width, Height)</l>
+<c></c>
+<c>* --- 2. Start Python and import OpenCV ---</c>
+<l>Py_Initialize ()</l>
+<l>Py_EvalString ('import cv2, numpy as np')</l>
+<l>Py_GetOutput (1024, _Msg)</l>
+<c></c>
+<c>* ============================================================</c>
+<c>* Example A: colour image — Gaussian blur with OpenCV</c>
+<c>* ============================================================</c>
+<c></c>
+<c>* --- 3. Put the colour image into a dict and send to Python ---</c>
+<l>create_dict (InDict)</l>
+<l>set_dict_object (Image, InDict, 'src')</l>
+<l>Py_SetImage (InDict)</l>
+<c>* 'src' is now a BGR numpy array of shape (Height, Width, 3)</c>
+<c></c>
+<c>* --- 4. Process with OpenCV ---</c>
+<l>Py_EvalString ('blurred = cv2.GaussianBlur(src, (15, 15), 0)')</l>
+<l>* Py_GetOutput (-1, ErrMsg)</l>
+<l>* dev_disp_text (ErrMsg, 'window', 'top', 'left', 'red', [], [])</l>
+<c></c>
+<l>Py_EvalString ('edges   = cv2.Canny(src, 80, 200)')</l>
+<c></c>
+<c>* --- 5. Retrieve results ---</c>
+<l>create_dict (OutDict)</l>
+<l>set_dict_tuple (OutDict, 'blurred', 0)</l>
+<l>set_dict_tuple (OutDict, 'edges',   0)</l>
+<l>Py_GetImage (OutDict)</l>
+<l>get_dict_object (BlurredImage, OutDict, 'blurred')</l>
+<l>get_dict_object (EdgeImage,    OutDict, 'edges')</l>
+<c></c>
+<c>* --- 6. Display ---</c>
+<l>dev_display (BlurredImage)</l>
+<l>dev_disp_text ('Gaussian blur (OpenCV)', 'window', 'top', 'left', 'white', [], [])</l>
+<l>stop ()</l>
+<l>dev_display (EdgeImage)</l>
+<l>dev_disp_text ('Canny edges (OpenCV)',   'window', 'top', 'left', 'white', [], [])</l>
+<l>stop ()</l>
+<c></c>
+<c>* ============================================================</c>
+<c>* Example B: grayscale + high bit-depth</c>
+<c>* ============================================================</c>
+<c></c>
+<l>rgb1_to_gray (Image, GrayImage)</l>
+<c></c>
+<c>* --- 7. Send grayscale image ---</c>
+<l>create_dict (GrayDict)</l>
+<l>set_dict_object (GrayImage, GrayDict, 'gray')</l>
+<l>Py_SetImage (GrayDict)</l>
+<c>* 'gray' is a 2-D numpy array of shape (Height, Width), dtype uint8</c>
+<c></c>
+<c>* --- 8. Convert to float32, apply CLAHE, return as float32 ---</c>
+<l>Py_EvalString ('gray_f = gray.astype(np.float32) / 255.0')</l>
+<l>Py_EvalString ('clahe  = cv2.createCLAHE(clipLimit=2.0, tileGridSize=(8,8))')</l>
+<l>Py_EvalString ('gray_eq = clahe.apply(gray)')</l>
+<c></c>
+<c>* --- 9. Retrieve float image and equalized image ---</c>
+<l>create_dict (GrayOutDict)</l>
+<l>set_dict_tuple (GrayOutDict, 'gray_f',  0)</l>
+<l>set_dict_tuple (GrayOutDict, 'gray_eq', 0)</l>
+<l>Py_GetImage (GrayOutDict)</l>
+<l>get_dict_object (FloatImage, GrayOutDict, 'gray_f')</l>
+<l>get_dict_object (EqImage,    GrayOutDict, 'gray_eq')</l>
+<c></c>
+<l>dev_display (EqImage)</l>
+<l>dev_disp_text ('CLAHE equalisation (OpenCV)', 'window', 'top', 'left', 'white', [], [])</l>
+<l>stop ()</l>
+<c></c>
+<c>* --- 10. Shutdown ---</c>
+<l>* Py_Finalize ()</l>
+<c></c>
+</body>
+<docu id="main">
+<parameters/>
+</docu>
+</procedure>
+</hdevelop>

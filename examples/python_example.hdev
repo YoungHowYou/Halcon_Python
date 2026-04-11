@@ -1,0 +1,136 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<hdevelop file_version="1.2" halcon_version="24.11.1.0">
+<procedure name="main">
+<interface/>
+<body>
+<c>* ============================================================</c>
+<c>* HALCON Python Extension — IV-curve fitting example</c>
+<c>* Mirrors matlab.hdev exactly; only the engine names change:</c>
+<c>*   Matlab_engOpen        →  Py_Initialize</c>
+<c>*   Matlab_engEvalString  →  Py_EvalString</c>
+<c>*   Matlab_engSetmxArray  →  Py_SetArray</c>
+<c>*   Matlab_engGetmxArray  →  Py_GetArray</c>
+<c>*   Matlab_engOutputBuffer→  Py_GetOutput</c>
+<c>* ============================================================</c>
+<c></c>
+<l>dev_get_window (WindowHandle)</l>
+<c></c>
+<c>* --- 1. Start Python interpreter (analogue of Matlab_engOpen_Init) ---</c>
+<l>Py_Initialize_Init (0, 1024, PyDictHandle)</l>
+<c></c>
+<c>* --- 2. Import scientific libraries ---</c>
+<l>Py_CMD (WindowHandle, 'import numpy as np')</l>
+<l>Py_CMD (WindowHandle, 'from scipy.optimize import curve_fit')</l>
+<c></c>
+<c>* --- 3. IV data (identical to matlab.hdev) ---</c>
+<l>I := [42.7,42.6146,42.4865,42.3584,42.273,41.1628,41.1201,41.0774,41.0347,40.992,40.9493,40.9066,40.8639,40.8212,40.7785,40.7358,39.284,38.43,25.62,17.08,8.54,0]</l>
+<l>I := I / 4</l>
+<l>U := [0,0.579000002,0.610568039,0.627232521,0.634974767,0.673746897,0.674477851,0.67515488,0.675958601,0.676538716,0.677205035,0.677934798,0.67854918,0.679161211,0.679750975,0.680393139,0.69443494,0.699595388,0.7300562,0.738289798,0.743940385,0.748200791]</l>
+<c></c>
+<c>* --- 4. Send arrays to Python (same call pattern as Matlab_engSetmxArray) ---</c>
+<l>Py_SetArray (|I|, 1, 'I', real(I))</l>
+<l>Py_SetArray (|U|, 1, 'U', real(U))</l>
+<c></c>
+<c>* --- 5. Define model and run fitting ---</c>
+<l>Py_CMD (WindowHandle, 'def model(x, a, b, c): return 10.675 - a*(np.exp(x/(b*0.0256064))) - (x/c)')</l>
+<l>Py_CMD (WindowHandle, 'popt, _ = curve_fit(model, U.flatten(), I.flatten(), p0=[0.5, 1.5, 10], maxfev=20000)')</l>
+<l>Py_CMD (WindowHandle, 'CC = popt')</l>
+<c></c>
+<c>* --- 6. Retrieve result (same call pattern as Matlab_engGetmxArray) ---</c>
+<l>Py_GetArray ('CC', M, N, VAL)</l>
+<c></c>
+<l>I0  := VAL[0]</l>
+<l>Nid := VAL[1]</l>
+<l>RSH := VAL[2]</l>
+<l>dev_disp_text ('I0=' + I0 + '  N=' + Nid + '  RSH=' + RSH, 'window', 'top', 'left', 'black', [], [])</l>
+<l>stop ()</l>
+<c></c>
+<c>* --- 7. Optional: plot using matplotlib ---</c>
+<l>Py_CMD (WindowHandle, 'import matplotlib.pyplot as plt')</l>
+<l>Py_CMD (WindowHandle, 'x_fit = np.linspace(U.min(), U.max(), 200)')</l>
+<l>Py_CMD (WindowHandle, 'plt.plot(U.flatten(), I.flatten(), "o", label="data")')</l>
+<l>Py_CMD (WindowHandle, 'plt.plot(x_fit, model(x_fit, *popt), label="fit"); plt.legend(); plt.show()')</l>
+<c></c>
+<c>* --- 8. Shutdown ---</c>
+<l>* Py_Finalize ()</l>
+<c></c>
+</body>
+<docu id="main">
+<parameters/>
+</docu>
+</procedure>
+<procedure name="Py_Initialize_Init">
+<interface>
+<ic>
+<par name="Visible" base_type="ctrl" dimension="0"/>
+<par name="Buffersize" base_type="ctrl" dimension="0"/>
+</ic>
+<oc>
+<par name="PyDictHandle" base_type="ctrl" dimension="0"/>
+</oc>
+</interface>
+<body>
+<l>Py_Initialize ()</l>
+<l>get_current_dir (DirName)</l>
+<l>Py_EvalString ('import sys; sys.path.insert(0, "' + DirName + '")')</l>
+<l>Py_GetOutput (Buffersize, BufferMsg)</l>
+<l>create_dict (PyDictHandle)</l>
+<l>return ()</l>
+</body>
+<docu id="Py_Initialize_Init">
+<parameters>
+<parameter id="Buffersize"/>
+<parameter id="PyDictHandle"/>
+<parameter id="Visible"/>
+</parameters>
+</docu>
+</procedure>
+<procedure name="Py_CMD">
+<interface>
+<ic>
+<par name="WindowHandle" base_type="ctrl" dimension="0"/>
+<par name="String" base_type="ctrl" dimension="0"/>
+</ic>
+</interface>
+<body>
+<l>Py_EvalString (String)</l>
+<l>Py_GetOutput (-1, BufferMsg)</l>
+<l>if (WindowHandle != 0)</l>
+<l>    clear_window (WindowHandle)</l>
+<l>    disp_text (WindowHandle, BufferMsg, 'window', 12, 12, 'black', [], [])</l>
+<l>endif</l>
+<l>return ()</l>
+</body>
+<docu id="Py_CMD">
+<parameters>
+<parameter id="String"/>
+<parameter id="WindowHandle"/>
+</parameters>
+</docu>
+</procedure>
+<procedure name="Py_DeclarationVAL">
+<interface>
+<ic>
+<par name="PyDictHandle" base_type="ctrl" dimension="0"/>
+<par name="name" base_type="ctrl" dimension="0"/>
+<par name="m" base_type="ctrl" dimension="0"/>
+<par name="n" base_type="ctrl" dimension="0"/>
+<par name="Val" base_type="ctrl" dimension="0"/>
+</ic>
+</interface>
+<body>
+<l>create_matrix (m, n, Val, MatrixID)</l>
+<l>set_dict_tuple (PyDictHandle, name, MatrixID)</l>
+<l>return ()</l>
+</body>
+<docu id="Py_DeclarationVAL">
+<parameters>
+<parameter id="PyDictHandle"/>
+<parameter id="Val"/>
+<parameter id="m"/>
+<parameter id="n"/>
+<parameter id="name"/>
+</parameters>
+</docu>
+</procedure>
+</hdevelop>

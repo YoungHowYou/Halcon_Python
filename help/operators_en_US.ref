@@ -1,0 +1,173 @@
+Py_GetImage(DictHandle)
+short.ascii=Read numpy arrays from Python and write them as HALCON image objects into a dict.
+keywords=pythongetimagenumpyopencvdicttransfer
+module=0 Foundation
+parameter=DictHandle
+parameter_class=input_control
+type_list=handle
+default_type=handle
+sem_type=handle
+multivalue=false
+Py_SetImage(DictHandle)
+short.ascii=Pass HALCON images stored in a dict to Python as numpy arrays (via ctypes, zero-copy read).
+keywords=pythonsetimagenumpyopencvdicttransfer
+module=0 Foundation
+parameter=DictHandle
+parameter_class=input_control
+type_list=handle
+default_type=handle
+sem_type=handle
+multivalue=false
+Py_GetOutput(Size,Output)
+short.ascii=Read (and clear) the Python stdout capture buffer.
+keywords=pythonoutputbufferstdoutprint
+module=0 Foundation
+parameter=Size
+parameter_class=input_control
+type_list=integer
+default_type=integer
+sem_type=number
+multivalue=false
+parameter=Output
+parameter_class=output_control
+type_list=string
+default_type=string
+sem_type=string
+multivalue=false
+Py_GetVariable(DictHandle)
+short.ascii=Read numpy arrays from Python and write them as HALCON matrix handles into a dict.
+keywords=pythongetvariablematrixdicthandle
+module=0 Foundation
+parameter=DictHandle
+parameter_class=input_control
+type_list=handle
+default_type=handle
+sem_type=handle
+multivalue=false
+Py_SetVariable(DictHandle)
+short.ascii=Pass HALCON matrix handles stored in a dict to Python as numpy arrays.
+keywords=pythonsetvariablematrixdicthandle
+module=0 Foundation
+parameter=DictHandle
+parameter_class=input_control
+type_list=handle
+default_type=handle
+sem_type=handle
+multivalue=false
+Py_GetArray(Name,M,N,VAL)
+short.ascii=Get a numpy array from the Python interpreter and return its shape and flat values.
+keywords=pythongetmatrixarraynumpy
+module=0 Foundation
+parameter=Name
+parameter_class=input_control
+type_list=string
+default_type=string
+sem_type=string
+multivalue=false
+parameter=M
+parameter_class=output_control
+type_list=integer
+default_type=integer
+sem_type=integer
+multivalue=false
+parameter=N
+parameter_class=output_control
+type_list=integer
+default_type=integer
+sem_type=integer
+multivalue=false
+parameter=VAL
+parameter_class=output_control
+type_list=real
+default_type=real
+sem_type=real
+multivalue=true
+Py_SetArray(M,N,Name,VAL)
+short.ascii=Set an M x N matrix in the Python interpreter as a numpy array.
+keywords=pythonsetmatrixarraynumpy
+module=0 Foundation
+parameter=M
+parameter_class=input_control
+type_list=integer
+default_type=integer
+sem_type=number
+multivalue=false
+parameter=N
+parameter_class=input_control
+type_list=integer
+default_type=integer
+sem_type=number
+multivalue=false
+parameter=Name
+parameter_class=input_control
+type_list=string
+default_type=string
+sem_type=string
+multivalue=false
+parameter=VAL
+parameter_class=input_control
+type_list=real
+default_type=real
+sem_type=number
+multivalue=true
+Py_GetScalar(Name,Value)
+short.ascii=Get a scalar variable from the Python interpreter.
+keywords=pythongetscalarvariable
+module=0 Foundation
+parameter=Name
+parameter_class=input_control
+type_list=string
+default_type=string
+sem_type=string
+multivalue=false
+parameter=Value
+parameter_class=output_control
+type_list=realintegerstring
+default_type=real
+sem_type=number
+multivalue=false
+Py_SetScalar(Name,Value)
+short.ascii=Set a scalar variable (int / float / string) in the Python interpreter.
+keywords=pythonsetscalarvariable
+module=0 Foundation
+parameter=Name
+parameter_class=input_control
+type_list=string
+default_type=string
+sem_type=string
+multivalue=false
+parameter=Value
+parameter_class=input_control
+type_list=realintegerstring
+default_type=real
+sem_type=number
+multivalue=false
+Py_Import(ModuleName)
+short.ascii=Import a Python module into the interpreter namespace.
+keywords=pythonimportmodule
+module=0 Foundation
+parameter=ModuleName
+parameter_class=input_control
+type_list=string
+default_type=string
+sem_type=string
+multivalue=false
+Py_EvalString(PyCode)
+short.ascii=Execute a Python code string in the interpreter.
+keywords=pythonevalcodeexecstring
+module=0 Foundation
+parameter=PyCode
+parameter_class=input_control
+type_list=string
+default_type=string
+sem_type=string
+multivalue=false
+Py_Finalize()
+short.ascii=Finalize the embedded Python interpreter.
+keywords=pythonfinalize
+module=0 Foundation
+Py_Initialize()
+short.ascii=Initialize the embedded Python interpreter.
+keywords=pythoninitialize
+module=0 Foundation
+
