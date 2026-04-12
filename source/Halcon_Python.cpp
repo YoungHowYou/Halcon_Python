@@ -28,74 +28,13 @@
 
 #include <cstring>
 #include <cstdio>
-#include <cstdarg>
 #include <vector>
 #include <string>
 
-/* Debug log — tries multiple paths */
-static FILE* g_dbg = nullptr;
-static void dbg_open()
-{
-    /* Try paths in order until one succeeds */
-    static const char* paths[] = {
-        "hp_debug.log",                                        /* cwd */
-        "D:\\Desktop\\hp_debug.log",
-        "D:\\hp_debug.log",
-        "C:\\hp_debug.log",
-        nullptr
-    };
-    for (int i = 0; paths[i] && !g_dbg; ++i)
-        g_dbg = fopen(paths[i], "a");
-}
-static void dbg(const char* fmt, ...)
-{
-    if (!g_dbg) dbg_open();
-    if (!g_dbg) return;
-    va_list ap; va_start(ap, fmt); vfprintf(g_dbg, fmt, ap); va_end(ap);
-    fputc('\n', g_dbg); fflush(g_dbg);
-}
-
-/* DllMain — write a sentinel on DLL load to confirm this binary is active */
+/* DllMain — minimal; can be extended for future diagnostics. */
 BOOL WINAPI DllMain(HINSTANCE hInst, DWORD reason, LPVOID)
 {
-    if (reason == DLL_PROCESS_ATTACH) {
-        /* Get the DLL's own path so we can log next to it */
-        char dllPath[MAX_PATH] = {0};
-        GetModuleFileNameA((HMODULE)hInst, dllPath, MAX_PATH);
-        OutputDebugStringA("[Halcon_Python] DLL_PROCESS_ATTACH path=");
-        OutputDebugStringA(dllPath);
-        OutputDebugStringA("\n");
-
-        /* Try to write log next to the DLL */
-        char logPath[MAX_PATH] = {0};
-        strncpy(logPath, dllPath, MAX_PATH - 15);
-        /* replace filename with hp_debug.log */
-        char* slash = strrchr(logPath, '\\');
-        if (!slash) slash = strrchr(logPath, '/');
-        if (slash) {
-            *(slash + 1) = '\0';
-            strcat(logPath, "hp_debug.log");
-        } else {
-            strcpy(logPath, "hp_debug.log");
-        }
-        OutputDebugStringA("[Halcon_Python] log path=");
-        OutputDebugStringA(logPath);
-        OutputDebugStringA("\n");
-
-        g_dbg = fopen(logPath, "a");
-        if (!g_dbg) {
-            /* fallbacks */
-            g_dbg = fopen("D:\\Desktop\\hp_debug.log", "a");
-        }
-        if (!g_dbg) {
-            g_dbg = fopen("C:\\hp_debug.log", "a");
-        }
-        if (g_dbg) {
-            fprintf(g_dbg, "[DllMain] loaded from: %s\n", dllPath);
-            fprintf(g_dbg, "[DllMain] log at: %s\n", logPath);
-            fflush(g_dbg);
-        }
-    }
+    (void)hInst;
     return TRUE;
 }
 
@@ -551,27 +490,20 @@ static size_t HalconElemSize(const char* halcon_type)
 
 static Herror SetImageInGlobals(const char* varname, const HObject& hImage)
 {
-    dbg("[SetImg] enter varname='%s'", varname);
-
     try {
         HTuple numCh;
-        dbg("[SetImg] CountChannels...");
         CountChannels(hImage, &numCh);
         Hlong nch = numCh[0].L();
-        dbg("[SetImg] numCh=%ld", (long)nch);
-
         bool is_color = (nch >= 3);
         HTuple imgType, width, height;
 
         if (!is_color) {
             /* ---- single channel ---- */
             HTuple ptr_t;
-            dbg("[SetImg] GetImagePointer1...");
             GetImagePointer1(hImage, &ptr_t, &imgType, &width, &height);
 
             std::string itype(imgType[0].S().Text());
             INT4_8 W = width[0].L(), H = height[0].L();
-            dbg("[SetImg] type=%s W=%lld H=%lld", itype.c_str(), (long long)W, (long long)H);
 
             const char* ctype_unused; const char* dtype;
             HalconTypeToCTypes(itype.c_str(), ctype_unused, dtype);
@@ -579,7 +511,6 @@ static Herror SetImageInGlobals(const char* varname, const HObject& hImage)
             const char* raw = reinterpret_cast<const char*>(
                 static_cast<uintptr_t>(ptr_t[0].L()));
 
-            dbg("[SetImg] PyBytes copy %llu bytes", (unsigned long long)(W * H * esz));
             PyObject* py_bytes = PyBytes_FromStringAndSize(raw, (Py_ssize_t)(W * H * esz));
             PyObject* py_W     = PyLong_FromLongLong(W);
             PyObject* py_H     = PyLong_FromLongLong(H);
@@ -594,21 +525,15 @@ static Herror SetImageInGlobals(const char* varname, const HObject& hImage)
                 "%s = _np.frombuffer(__ibytes__, dtype=_np.%s).reshape(__iH__, __iW__).copy()\n"
                 "del __ibytes__, __iW__, __iH__",
                 varname, dtype);
-            dbg("[SetImg] PyExec single-ch");
-            if (!PyExec(cmd)) {
-                dbg("[SetImg] PyExec FAILED (single-ch)");
-                return H_ERR_WIPV2;
-            }
+            if (!PyExec(cmd)) return H_ERR_WIPV2;
 
         } else {
             /* ---- 3-channel color: HALCON planes are R, G, B ---- */
             HTuple ptr1, ptr2, ptr3;
-            dbg("[SetImg] GetImagePointer3...");
             GetImagePointer3(hImage, &ptr1, &ptr2, &ptr3, &imgType, &width, &height);
 
             std::string itype(imgType[0].S().Text());
             INT4_8 W = width[0].L(), H = height[0].L();
-            dbg("[SetImg] color type=%s W=%lld H=%lld", itype.c_str(), (long long)W, (long long)H);
 
             const char* ctype_unused; const char* dtype;
             HalconTypeToCTypes(itype.c_str(), ctype_unused, dtype);
@@ -619,7 +544,6 @@ static Herror SetImageInGlobals(const char* varname, const HObject& hImage)
             const char* gp = reinterpret_cast<const char*>(static_cast<uintptr_t>(ptr2[0].L()));
             const char* bp = reinterpret_cast<const char*>(static_cast<uintptr_t>(ptr3[0].L()));
 
-            dbg("[SetImg] planes psz=%llu, copying R/G/B bytes", (unsigned long long)psz);
             PyObject* py_r = PyBytes_FromStringAndSize(rp, (Py_ssize_t)psz);
             PyObject* py_g = PyBytes_FromStringAndSize(gp, (Py_ssize_t)psz);
             PyObject* py_b = PyBytes_FromStringAndSize(bp, (Py_ssize_t)psz);
@@ -642,22 +566,15 @@ static Herror SetImageInGlobals(const char* varname, const HObject& hImage)
                 "%s = _np.dstack((__b, __g, __r)).copy()\n"
                 "del __ir__, __ig__, __ib__, __iW__, __iH__, __r, __g, __b",
                 dtype, dtype, dtype, varname);
-            dbg("[SetImg] PyExec color");
-            if (!PyExec(cmd)) {
-                dbg("[SetImg] PyExec FAILED (color)");
-                return H_ERR_WIPV2;
-            }
+            if (!PyExec(cmd)) return H_ERR_WIPV2;
         }
 
-    } catch (const HalconCpp::HException& he) {
-        dbg("[SetImg] HException code=%ld: %s", (long)he.ErrorCode(), he.ErrorMessage().Text());
+    } catch (const HalconCpp::HException&) {
         return H_ERR_WIPV2;
     } catch (...) {
-        dbg("[SetImg] unknown C++ exception");
         return H_ERR_WIPV2;
     }
 
-    dbg("[SetImg] success: '%s' transferred", varname);
     return H_MSG_TRUE;
 }
 
@@ -674,8 +591,6 @@ static Herror SetImageInGlobals(const char* varname, const HObject& hImage)
  * ------------------------------------------------------------------------- */
 static Herror GetImageFromGlobals(const char* varname, HObject& hImageOut)
 {
-    dbg("[GetImg] enter varname='%s'", varname);
-
     /* Step 1: gather array metadata in Python */
     char setup[1024];
     snprintf(setup, sizeof(setup),
@@ -685,18 +600,13 @@ static Herror GetImageFromGlobals(const char* varname, HObject& hImageOut)
         "__ind__ = int(__ia__.ndim)\n"
         "__ish__ = list(__ia__.shape)",
         varname);
-    dbg("[GetImg] PyExec setup for '%s'", varname);
-    if (!PyExec(setup)) {
-        dbg("[GetImg] setup PyExec FAILED for '%s'", varname);
-        return H_ERR_WIPV2;
-    }
+    if (!PyExec(setup)) return H_ERR_WIPV2;
 
     PyObject* py_dt = PyDict_GetItemString(Globals(), "__idt__");
     PyObject* py_nd = PyDict_GetItemString(Globals(), "__ind__");
     PyObject* py_sh = PyDict_GetItemString(Globals(), "__ish__");
 
     if (!py_dt || !py_nd || !py_sh) {
-        dbg("[GetImg] missing metadata for '%s'", varname);
         PyExec("del __ia__, __idt__, __ind__, __ish__");
         return H_ERR_WIPV2;
     }
@@ -707,18 +617,13 @@ static Herror GetImageFromGlobals(const char* varname, HObject& hImageOut)
     INT4_8 W_img = PyList_GET_SIZE(py_sh) >= 2 ? PyLong_AsLongLong(PyList_GET_ITEM(py_sh, 1)) : 1;
     INT4_8 C_img = (ndim >= 3 && PyList_GET_SIZE(py_sh) >= 3) ?
                    PyLong_AsLongLong(PyList_GET_ITEM(py_sh, 2)) : 1;
-    dbg("[GetImg] '%s' dtype=%s ndim=%lld shape=[%lld,%lld,%lld]",
-        varname, dtype_str, (long long)ndim, (long long)H_img, (long long)W_img, (long long)C_img);
 
     /* float64 → float32 (HALCON "real" is 32-bit) */
     if (strcmp(dtype_str, "float64") == 0) {
         PyExec("__ia__ = __ia__.astype(_np.float32, copy=False)");
         dtype_str = "float32";
-        dbg("[GetImg] converted float64->float32");
     }
     const char* halcon_type = NumpyDtypeToHalcon(dtype_str);
-    dbg("[GetImg] halcon_type=%s  W=%lld H=%lld C=%lld",
-        halcon_type, (long long)W_img, (long long)H_img, (long long)C_img);
 
     Herror err = H_MSG_TRUE;
     try {
@@ -727,17 +632,11 @@ static Herror GetImageFromGlobals(const char* varname, HObject& hImageOut)
             if (ndim == 3 && C_img == 1) {
                 PyExec("__ia__ = _np.ascontiguousarray(__ia__[:,:,0])");
             }
-            /* Copy pixel data from Python array into a bytes object */
-            dbg("[GetImg] tobytes single-ch");
             PyExec("__ibytes__ = __ia__.tobytes()");
             PyObject* py_bytes = PyDict_GetItemString(Globals(), "__ibytes__");
-            if (!py_bytes) {
-                dbg("[GetImg] __ibytes__ not found");
-                err = H_ERR_WIPV2; goto cleanup;
-            }
+            if (!py_bytes) { err = H_ERR_WIPV2; goto cleanup; }
 
             const char* raw = PyBytes_AsString(py_bytes);
-            dbg("[GetImg] GenImage1 type=%s W=%lld H=%lld", halcon_type, (long long)W_img, (long long)H_img);
             HObject tmp1;
             GenImage1(&tmp1,
                       HTuple(halcon_type),
@@ -745,11 +644,9 @@ static Herror GetImageFromGlobals(const char* varname, HObject& hImageOut)
                       HTuple((Hlong)(uintptr_t)raw));
             CopyImage(tmp1, &hImageOut);
             PyExec("del __ibytes__");
-            dbg("[GetImg] single-ch done");
 
         } else if (C_img == 3) {
             /* ---- 3-channel BGR (OpenCV) → HALCON R/G/B planes ---- */
-            dbg("[GetImg] tobytes 3-ch BGR");
             PyExec(
                 "__ch0__ = _np.ascontiguousarray(__ia__[:,:,0]).tobytes()\n"  /* B */
                 "__ch1__ = _np.ascontiguousarray(__ia__[:,:,1]).tobytes()\n"  /* G */
@@ -759,7 +656,6 @@ static Herror GetImageFromGlobals(const char* varname, HObject& hImageOut)
             PyObject* pg = PyDict_GetItemString(Globals(), "__ch1__");
             PyObject* pr = PyDict_GetItemString(Globals(), "__ch2__");
             if (!pb || !pg || !pr) {
-                dbg("[GetImg] channel bytes missing pb=%p pg=%p pr=%p", pb, pg, pr);
                 PyExec("del __ch0__, __ch1__, __ch2__");
                 err = H_ERR_WIPV2; goto cleanup;
             }
@@ -767,7 +663,6 @@ static Herror GetImageFromGlobals(const char* varname, HObject& hImageOut)
             const char* ptr_g = PyBytes_AsString(pg);
             const char* ptr_r = PyBytes_AsString(pr);
 
-            dbg("[GetImg] GenImage3 type=%s W=%lld H=%lld", halcon_type, (long long)W_img, (long long)H_img);
             HObject tmp3;
             GenImage3(&tmp3,
                       HTuple(halcon_type),
@@ -777,24 +672,19 @@ static Herror GetImageFromGlobals(const char* varname, HObject& hImageOut)
                       HTuple((Hlong)(uintptr_t)ptr_b));
             CopyImage(tmp3, &hImageOut);
             PyExec("del __ch0__, __ch1__, __ch2__");
-            dbg("[GetImg] 3-ch done");
 
         } else {
-            dbg("[GetImg] unsupported C_img=%lld", (long long)C_img);
             err = H_ERR_WIPV2;
         }
 
-    } catch (const HalconCpp::HException& he) {
-        dbg("[GetImg] HException code=%ld: %s", (long)he.ErrorCode(), he.ErrorMessage().Text());
+    } catch (const HalconCpp::HException&) {
         err = H_ERR_WIPV2;
     } catch (...) {
-        dbg("[GetImg] unknown C++ exception");
         err = H_ERR_WIPV2;
     }
 
 cleanup:
     PyExec("del __ia__, __idt__, __ind__, __ish__");
-    dbg("[GetImg] return err=%ld for '%s'", (long)err, varname);
     return err;
 }
 
@@ -816,74 +706,39 @@ Herror HPy_SetImage(Hproc_handle proc_handle)
     Hcpar*  dict_par;
     INT4_8  num;
     HGetPPar(proc_handle, 1, &dict_par, &num);
-    /* HTuple(Hcpar*,1) truncates 64-bit Hphandle to 32 bits.
-     * Construct via HHandle(Hlong) to preserve the full pointer value. */
     HHandle hv_DictHandle((Hlong)dict_par[0].par.h);
     HTuple  hv_Dict(hv_DictHandle);
 
     /* Collect image-entry keys.
-     * HALCON < 24:  "keys" = tuple entries only; "object_keys" = object entries.
-     * HALCON ≥ 24:  "object_keys" may throw; "keys" may return ALL entries.
-     * Strategy: try "object_keys" first; if it throws or returns empty, fall
-     * back to "keys" and filter with GetDictObject per key. */
-    dbg("[HPy_SetImage] enter: hv_Dict type=%d len=%ld par.l=%lld",
-        (int)hv_Dict.Type(), (long)hv_Dict.Length(),
-        (long long)dict_par[0].par.l);
-    /* sanity: try GetDictObject with explicit key 'src' */
-    try {
-        HObject _test_img;
-        GetDictObject(&_test_img, hv_Dict, HTuple("src"));
-        dbg("[HPy_SetImage] GetDictObject('src') OK => dict is correct");
-    } catch (...) {
-        dbg("[HPy_SetImage] GetDictObject('src') FAILED => wrong dict handle");
-    }
+     * Try "object_keys" first; fall back to "keys" and filter per key. */
     HTuple keys;
     try {
         GetDictParam(hv_Dict, "object_keys", HTuple(), &keys);
-        dbg("[HPy_SetImage] object_keys count=%ld", (long)keys.Length());
     } catch (...) {
         keys = HTuple();
-        dbg("[HPy_SetImage] object_keys threw, using 'keys' fallback");
     }
 
     if (keys.Length() == 0) {
         try {
             GetDictParam(hv_Dict, "keys", HTuple(), &keys);
-            dbg("[HPy_SetImage] keys count=%ld", (long)keys.Length());
         } catch (...) {
-            dbg("[HPy_SetImage] keys threw, empty dict");
             return H_MSG_TRUE;
         }
     }
 
     for (Hlong i = 0; i < keys.Length(); i++) {
         HTuple key(keys[i]);
-        const char* varname   = key.S();
-        const char* varname_c = keys[i].C();
-        dbg("[HPy_SetImage] key[%ld] S='%s' C='%s'",
-            (long)i,
-            varname   ? varname   : "(null)",
-            varname_c ? varname_c : "(null)");
-
-        if (!varname || !*varname) {
-            if (varname_c && *varname_c) varname = varname_c;
-        }
-        if (!varname || !*varname) {
-            dbg("[HPy_SetImage] key[%ld] empty/null, skipping", (long)i);
-            continue;
-        }
-        dbg("[HPy_SetImage] key='%s', GetDictObject...", varname);
+        const char* varname = keys[i].C();
+        if (!varname || !*varname) continue;
 
         /* GetDictObject throws if the value is tuple-valued */
         HObject hImage;
         try {
             GetDictObject(&hImage, hv_Dict, key);
         } catch (...) {
-            dbg("[HPy_SetImage] key='%s' tuple-valued, skipping", varname);
             continue;
         }
 
-        dbg("[HPy_SetImage] key='%s' is object, -> SetImageInGlobals", varname);
         Herror err = SetImageInGlobals(varname, hImage);
         if (err != H_MSG_TRUE) return err;
     }
@@ -923,7 +778,6 @@ Herror HPy_GetImage(Hproc_handle proc_handle)
         const char* varname = keys[i].C();
         if (!varname || !*varname) continue; /* skip integer/empty keys */
 
-        dbg("[HPy_GetImage] key='%s'", varname);
         HObject hImage;
         Herror err = GetImageFromGlobals(varname, hImage);
         if (err != H_MSG_TRUE) continue; /* skip variables that can't be converted */
