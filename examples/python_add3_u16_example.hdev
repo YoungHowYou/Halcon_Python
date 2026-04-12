@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<hdevelop file_version="1.2" halcon_version="24.11.1.0">
+<procedure name="main">
+<interface/>
+<body>
+<c>* ============================================================</c>
+<c>* HALCON Python Extension — load a .py file and call its function</c>
+<c>*</c>
+<c>* 1. Load 3 gray images.</c>
+<c>* 2. Start Python, load add3_u16.py (contains add3_u16()).</c>
+<c>* 3. Push the 3 images into a dict, send to Python.</c>
+<c>* 4. Call add3_u16(a, b, c) — converts each to uint16 and sums.</c>
+<c>* 5. Receive the uint16 result back as a HALCON image.</c>
+<c>* ============================================================</c>
+<c></c>
+<l>dev_get_window (WindowHandle)</l>
+<c></c>
+<c>* --- 1. Load 3 test images (same size, gray) ---</c>
+<l>read_image (I1, 'fabrik')</l>
+<l>read_image (I2, 'mreut')</l>
+<l>read_image (I3, 'monkey')</l>
+<l>rgb1_to_gray (I1, G1)</l>
+<l>rgb1_to_gray (I2, G2)</l>
+<l>rgb1_to_gray (I3, G3)</l>
+<l>get_image_size (G1, W, H)</l>
+<l>zoom_image_size (G2, G2, W, H, 'constant')</l>
+<l>zoom_image_size (G3, G3, W, H, 'constant')</l>
+<c></c>
+<c>* --- 2. Start Python and load the .py module from repo root ---</c>
+<l>Py_Initialize ()</l>
+<l>Py_EvalString ('import numpy as np')</l>
+<c>* Use exec(open(...).read()) so add3_u16 is injected into globals</c>
+<l>PyFile := 'D:/Desktop/Source/Halcon_Extension/Halcon_Python/add3_u16.py'</l>
+<l>Py_EvalString ('exec(open(r\'' + PyFile + '\').read())')</l>
+<l>Py_GetOutput (1024, _Msg)</l>
+<c></c>
+<c>* --- 3. Pack the 3 images into an input dict and send to Python ---</c>
+<l>create_dict (InDict)</l>
+<l>set_dict_object (G1, InDict, 'img1')</l>
+<l>set_dict_object (G2, InDict, 'img2')</l>
+<l>set_dict_object (G3, InDict, 'img3')</l>
+<l>Py_SetImage (InDict)</l>
+<c></c>
+<c>* --- 4. Call the algorithm — uint16 sum of the 3 images ---</c>
+<l>Py_EvalString ('result = add3_u16(img1, img2, img3)')</l>
+<l>Py_GetOutput (1024, _Msg2)</l>
+<c></c>
+<c>* --- 5. Retrieve the result back as a HALCON image ---</c>
+<l>create_dict (OutDict)</l>
+<l>set_dict_tuple (OutDict, 'result', 0)</l>
+<l>Py_GetImage (OutDict)</l>
+<l>get_dict_object (SumImage, OutDict, 'result')</l>
+<c></c>
+<c>* --- 6. Display ---</c>
+<l>dev_display (SumImage)</l>
+<l>dev_disp_text ('add3_u16: uint16 sum of 3 images', 'window', 'top', 'left', 'white', [], [])</l>
+<l>stop ()</l>
+<c></c>
+<c>* --- 7. Shutdown ---</c>
+<l>* Py_Finalize ()</l>
+<c></c>
+</body>
+<docu id="main">
+<parameters/>
+</docu>
+</procedure>
+</hdevelop>
