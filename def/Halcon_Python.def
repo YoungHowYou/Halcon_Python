@@ -376,3 +376,149 @@ parameter
   multivalue:         false;
   sem_type:           handle;
   type_list:          handle;
+
+
+Py_SetPythonTuple <- CPy_SetPythonTuple[::DictHandle,Key,Value:]
+short.german
+  Tuple-Variable in Python setzen und im Dict speichern.;
+short.english
+  Set a Python variable from a HALCON tuple and store it in the dict.;
+module
+  foundation;
+chapter.german
+  BenutzerErweiterungen;
+chapter.english
+  UserExtensions;
+keywords.english
+  python, set, tuple, dict, variable;
+parallelization
+  process_exclusively: false;
+  process_locally:     false;
+  process_mutual:      false;
+  method:              none;
+parameter
+  DictHandle:         input_control;
+  default_type:       handle;
+  multivalue:         false;
+  sem_type:           handle;
+  type_list:          handle;
+parameter
+  Key:                input_control;
+  default_type:       string;
+  multivalue:         false;
+  sem_type:           string;
+  type_list:          string;
+parameter
+  Value:              input_control;
+  default_type:       real;
+  multivalue:         true;
+  sem_type:           number;
+  type_list:          real, integer, string;
+
+
+Py_GetPythonTuple <- CPy_GetPythonTuple[::DictHandle,Key:Value]
+short.german
+  Tuple-Variable aus Python lesen und im Dict speichern.;
+short.english
+  Get a Python variable as a HALCON tuple and store it in the dict.;
+module
+  foundation;
+chapter.german
+  BenutzerErweiterungen;
+chapter.english
+  UserExtensions;
+keywords.english
+  python, get, tuple, dict, variable;
+parallelization
+  process_exclusively: false;
+  process_locally:     false;
+  process_mutual:      false;
+  method:              none;
+parameter
+  DictHandle:         input_control;
+  default_type:       handle;
+  multivalue:         false;
+  sem_type:           handle;
+  type_list:          handle;
+parameter
+  Key:                input_control;
+  default_type:       string;
+  multivalue:         false;
+  sem_type:           string;
+  type_list:          string;
+parameter
+  Value:              output_control;
+  default_type:       real;
+  multivalue:         true;
+  sem_type:           number;
+  type_list:          real, integer, string;
+
+
+Py_SetPythonObject <- CPy_SetPythonObject[Image::DictHandle,Key:]
+short.german
+  HALCON-Bild als numpy-Array an Python uebergeben und im Dict speichern.;
+short.english
+  Transfer a HALCON image to Python as a numpy array and store it in the dict.;
+module
+  foundation;
+chapter.german
+  BenutzerErweiterungen;
+chapter.english
+  UserExtensions;
+keywords.english
+  python, set, image, object, numpy, dict;
+parallelization
+  process_exclusively: false;
+  process_locally:     false;
+  process_mutual:      false;
+  method:              none;
+parameter
+  Image:              input_object;
+  sem_type:           image;
+parameter
+  DictHandle:         input_control;
+  default_type:       handle;
+  multivalue:         false;
+  sem_type:           handle;
+  type_list:          handle;
+parameter
+  Key:                input_control;
+  default_type:       string;
+  multivalue:         false;
+  sem_type:           string;
+  type_list:          string;
+
+
+Py_GetPythonObject <- CPy_GetPythonObject[:Image:DictHandle,Key:]
+short.german
+  Python numpy-Array als HALCON-Bild zurueckschreiben und im Dict speichern.;
+short.english
+  Read a Python numpy array as a HALCON image and store it in the dict.;
+module
+  foundation;
+chapter.german
+  BenutzerErweiterungen;
+chapter.english
+  UserExtensions;
+keywords.english
+  python, get, image, object, numpy, dict;
+parallelization
+  process_exclusively: false;
+  process_locally:     false;
+  process_mutual:      false;
+  method:              none;
+parameter
+  Image:              output_object;
+  sem_type:           image;
+parameter
+  DictHandle:         input_control;
+  default_type:       handle;
+  multivalue:         false;
+  sem_type:           handle;
+  type_list:          handle;
+parameter
+  Key:                input_control;
+  default_type:       string;
+  multivalue:         false;
+  sem_type:           string;
+  type_list:          string;

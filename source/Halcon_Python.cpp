@@ -939,6 +939,247 @@ Herror HPy_GetImage(Hproc_handle proc_handle)
 }
 
 /* -------------------------------------------------------------------------
+ * Py_SetPythonTuple — set a Python variable from a HALCON tuple,
+ *                     and store the tuple in the dict under the same key.
+ *
+ *   set_python_tuple (DictHandle, 'x', 42)
+ *   → Python globals['x'] = 42, dict['x'] = 42
+ *
+ * Supports int, float, string scalars and mixed tuples (→ Python list).
+ * ------------------------------------------------------------------------- */
+Herror HPy_SetPythonTuple(Hproc_handle proc_handle)
+{
+    HAllocStringMem(proc_handle, 1024);
+
+    Hcpar* dict_par; INT4_8 dnum;
+    HGetPPar(proc_handle, 1, &dict_par, &dnum);
+    HHandle hv_DictHandle((Hlong)dict_par[0].par.h);
+    HTuple  hv_Dict(hv_DictHandle);
+
+    Hcpar keyPar;
+    HGetSPar(proc_handle, 2, STRING_PAR, &keyPar, 1);
+    const char* varname = keyPar.par.s;
+
+    Hcpar* valPar; INT4_8 vnum;
+    HGetPPar(proc_handle, 3, &valPar, &vnum);
+
+    /* Build Python object from the tuple elements */
+    PyObject* py_val = nullptr;
+    if (vnum == 1) {
+        switch (valPar[0].type) {
+            case LONG_PAR:   py_val = PyLong_FromLongLong(valPar[0].par.l);  break;
+            case DOUBLE_PAR: py_val = PyFloat_FromDouble(valPar[0].par.d);   break;
+            case STRING_PAR: py_val = PyUnicode_FromString(valPar[0].par.s); break;
+            default:         return H_ERR_WIPV2;
+        }
+    } else {
+        py_val = PyList_New((Py_ssize_t)vnum);
+        for (INT4_8 i = 0; i < vnum; i++) {
+            PyObject* elem = nullptr;
+            switch (valPar[i].type) {
+                case LONG_PAR:   elem = PyLong_FromLongLong(valPar[i].par.l);  break;
+                case DOUBLE_PAR: elem = PyFloat_FromDouble(valPar[i].par.d);   break;
+                case STRING_PAR: elem = PyUnicode_FromString(valPar[i].par.s); break;
+                default:         elem = Py_None; Py_INCREF(elem);              break;
+            }
+            PyList_SET_ITEM(py_val, (Py_ssize_t)i, elem);
+        }
+    }
+    PyDict_SetItemString(Globals(), varname, py_val);
+    Py_DECREF(py_val);
+
+    /* Also store in the dict */
+    HTuple hv_Value;
+    for (INT4_8 i = 0; i < vnum; i++) {
+        switch (valPar[i].type) {
+            case LONG_PAR:   hv_Value.Append((Hlong)valPar[i].par.l);          break;
+            case DOUBLE_PAR: hv_Value.Append(valPar[i].par.d);                 break;
+            case STRING_PAR: hv_Value.Append(HTuple(valPar[i].par.s));         break;
+            default: break;
+        }
+    }
+    SetDictTuple(hv_Dict, HTuple(varname), hv_Value);
+
+    return H_MSG_TRUE;
+}
+
+/* -------------------------------------------------------------------------
+ * Py_GetPythonTuple — read a Python variable and return it as a HALCON tuple,
+ *                     also store the value in the dict.
+ *
+ *   get_python_tuple (DictHandle, 'x', Value)
+ *   → reads Python globals['x'], returns as Value, stores dict['x'] = Value
+ *
+ * Scalars return as single element; lists return as HALCON tuple.
+ * ------------------------------------------------------------------------- */
+Herror HPy_GetPythonTuple(Hproc_handle proc_handle)
+{
+    HAllocStringMem(proc_handle, 1024);
+
+    Hcpar* dict_par; INT4_8 dnum;
+    HGetPPar(proc_handle, 1, &dict_par, &dnum);
+    HHandle hv_DictHandle((Hlong)dict_par[0].par.h);
+    HTuple  hv_Dict(hv_DictHandle);
+
+    Hcpar keyPar;
+    HGetSPar(proc_handle, 2, STRING_PAR, &keyPar, 1);
+    const char* varname = keyPar.par.s;
+
+    PyObject* val = PyDict_GetItemString(Globals(), varname);
+    if (!val) return H_ERR_WIPV2;
+
+    /* Helper lambda: convert one PyObject to HALCON output */
+    auto putSingle = [&](PyObject* v) {
+        if (PyBool_Check(v)) {
+            INT4_8 l = (v == Py_True) ? 1 : 0;
+            HPutElem(proc_handle, 1, &l, 1, LONG_PAR);
+        } else if (PyLong_Check(v)) {
+            INT4_8 l = PyLong_AsLongLong(v);
+            HPutElem(proc_handle, 1, &l, 1, LONG_PAR);
+        } else if (PyFloat_Check(v)) {
+            double d = PyFloat_AsDouble(v);
+            HPutElem(proc_handle, 1, &d, 1, DOUBLE_PAR);
+        } else {
+            PyObject* s_obj = PyObject_Str(v);
+            const char* s = PyUnicode_AsUTF8(s_obj);
+            char* tmp;
+            HAllocTmp(proc_handle, &tmp, (Hlong)(strlen(s) + 1));
+            strcpy(tmp, s);
+            HPutElem(proc_handle, 1, &tmp, 1, STRING_PAR);
+            Py_DECREF(s_obj);
+        }
+    };
+
+    HTuple hv_Value;
+
+    if (PyList_Check(val) || PyTuple_Check(val)) {
+        Py_ssize_t n = PyList_Check(val) ? PyList_GET_SIZE(val) : PyTuple_GET_SIZE(val);
+        std::vector<double>  dvals;
+        std::vector<INT4_8>  lvals;
+        bool all_int = true, all_num = true;
+        for (Py_ssize_t i = 0; i < n; i++) {
+            PyObject* item = PyList_Check(val) ? PyList_GET_ITEM(val, i) : PyTuple_GET_ITEM(val, i);
+            if (PyFloat_Check(item)) { all_int = false; }
+            else if (!PyLong_Check(item)) { all_int = false; all_num = false; }
+        }
+        if (all_num && all_int && n > 0) {
+            INT4_8* buf;
+            HAllocTmp(proc_handle, &buf, (Hlong)(n * sizeof(INT4_8)));
+            for (Py_ssize_t i = 0; i < n; i++) {
+                PyObject* item = PyList_Check(val) ? PyList_GET_ITEM(val, i) : PyTuple_GET_ITEM(val, i);
+                buf[i] = PyLong_AsLongLong(item);
+                hv_Value.Append((Hlong)buf[i]);
+            }
+            HPutElem(proc_handle, 1, buf, (INT4_8)n, LONG_PAR);
+        } else if (all_num && n > 0) {
+            double* buf;
+            HAllocTmp(proc_handle, &buf, (Hlong)(n * sizeof(double)));
+            for (Py_ssize_t i = 0; i < n; i++) {
+                PyObject* item = PyList_Check(val) ? PyList_GET_ITEM(val, i) : PyTuple_GET_ITEM(val, i);
+                buf[i] = PyFloat_Check(item) ? PyFloat_AsDouble(item) : (double)PyLong_AsLongLong(item);
+                hv_Value.Append(buf[i]);
+            }
+            HPutElem(proc_handle, 1, buf, (INT4_8)n, DOUBLE_PAR);
+        } else if (n == 0) {
+            /* empty list → empty string */
+            const char* empty = "";
+            char* tmp;
+            HAllocTmp(proc_handle, &tmp, 1);
+            tmp[0] = '\0';
+            HPutElem(proc_handle, 1, &tmp, 1, STRING_PAR);
+        } else {
+            /* mixed or string list → return first element as scalar */
+            putSingle(PyList_Check(val) ? PyList_GET_ITEM(val, 0) : PyTuple_GET_ITEM(val, 0));
+        }
+    } else {
+        putSingle(val);
+        if (PyBool_Check(val) || PyLong_Check(val))
+            hv_Value.Append((Hlong)PyLong_AsLongLong(val));
+        else if (PyFloat_Check(val))
+            hv_Value.Append(PyFloat_AsDouble(val));
+        else {
+            PyObject* s_obj = PyObject_Str(val);
+            hv_Value.Append(HTuple(PyUnicode_AsUTF8(s_obj)));
+            Py_DECREF(s_obj);
+        }
+    }
+
+    if (hv_Value.Length() > 0)
+        SetDictTuple(hv_Dict, HTuple(varname), hv_Value);
+
+    return H_MSG_TRUE;
+}
+
+/* -------------------------------------------------------------------------
+ * Py_SetPythonObject — transfer a HALCON image (iconic input) to Python
+ *                      as a numpy array, and store it in the dict.
+ *
+ *   set_python_object (Image, DictHandle, 'src')
+ *   → Python globals['src'] = numpy array, dict['src'] = Image
+ * ------------------------------------------------------------------------- */
+Herror HPy_SetPythonObject(Hproc_handle proc_handle)
+{
+    HAllocStringMem(proc_handle, 512);
+
+    /* 1. Get input iconic object */
+    Hkey obj_key;
+    HGetObj(proc_handle, 1, 1, &obj_key);
+    HObject hImage(obj_key);
+
+    /* 2. Get control parameters */
+    Hcpar* dict_par; INT4_8 dnum;
+    HGetPPar(proc_handle, 1, &dict_par, &dnum);
+    HHandle hv_DictHandle((Hlong)dict_par[0].par.h);
+    HTuple  hv_Dict(hv_DictHandle);
+
+    Hcpar keyPar;
+    HGetSPar(proc_handle, 2, STRING_PAR, &keyPar, 1);
+    const char* varname = keyPar.par.s;
+
+    /* 3. Store image in dict */
+    SetDictObject(hImage, hv_Dict, HTuple(varname));
+
+    /* 4. Push image to Python globals */
+    return SetImageInGlobals(varname, hImage);
+}
+
+/* -------------------------------------------------------------------------
+ * Py_GetPythonObject — read a Python numpy array and return it as a HALCON
+ *                      image (iconic output), also store in the dict.
+ *
+ *   get_python_object (Image, DictHandle, 'result')
+ *   → reads Python globals['result'], outputs Image, stores dict['result']
+ * ------------------------------------------------------------------------- */
+Herror HPy_GetPythonObject(Hproc_handle proc_handle)
+{
+    HAllocStringMem(proc_handle, 512);
+
+    /* 1. Get control parameters */
+    Hcpar* dict_par; INT4_8 dnum;
+    HGetPPar(proc_handle, 1, &dict_par, &dnum);
+    HHandle hv_DictHandle((Hlong)dict_par[0].par.h);
+    HTuple  hv_Dict(hv_DictHandle);
+
+    Hcpar keyPar;
+    HGetSPar(proc_handle, 2, STRING_PAR, &keyPar, 1);
+    const char* varname = keyPar.par.s;
+
+    /* 2. Get image from Python */
+    HObject hImage;
+    Herror err = GetImageFromGlobals(varname, hImage);
+    if (err != H_MSG_TRUE) return err;
+
+    /* 3. Store image in dict */
+    SetDictObject(hImage, hv_Dict, HTuple(varname));
+
+    /* 4. Copy to output iconic parameter */
+    Hkey out_key;
+    HCopyObj(proc_handle, hImage.Key(), 1, &out_key);
+
+    return H_MSG_TRUE;
+}
+
+/* -------------------------------------------------------------------------
  * Py_GetOutput  ↔  Matlab_engOutputBuffer
  *
  *   Size > 0   →  just clears the buffer, returns ""  (like setting up a buffer)

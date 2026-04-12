@@ -48,6 +48,10 @@ extern HPy_EXPORTS_API Herror HPy_GetVariable(Hproc_handle proc_handle);
 extern HPy_EXPORTS_API Herror HPy_GetOutput(Hproc_handle proc_handle);
 extern HPy_EXPORTS_API Herror HPy_SetImage(Hproc_handle proc_handle);
 extern HPy_EXPORTS_API Herror HPy_GetImage(Hproc_handle proc_handle);
+extern HPy_EXPORTS_API Herror HPy_SetPythonTuple(Hproc_handle proc_handle);
+extern HPy_EXPORTS_API Herror HPy_GetPythonTuple(Hproc_handle proc_handle);
+extern HPy_EXPORTS_API Herror HPy_SetPythonObject(Hproc_handle proc_handle);
+extern HPy_EXPORTS_API Herror HPy_GetPythonObject(Hproc_handle proc_handle);
 
 #ifdef __cplusplus
 }

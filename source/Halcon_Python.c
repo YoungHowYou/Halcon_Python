@@ -15,5 +15,9 @@ Herror CPy_GetArray(Hproc_handle proc_handle)    { return HPy_GetArray(proc_hand
 Herror CPy_SetVariable(Hproc_handle proc_handle) { return HPy_SetVariable(proc_handle); }
 Herror CPy_GetVariable(Hproc_handle proc_handle) { return HPy_GetVariable(proc_handle); }
 Herror CPy_GetOutput(Hproc_handle proc_handle)   { return HPy_GetOutput(proc_handle);   }
-Herror CPy_SetImage(Hproc_handle proc_handle)    { return HPy_SetImage(proc_handle);    }
-Herror CPy_GetImage(Hproc_handle proc_handle)    { return HPy_GetImage(proc_handle);    }
+Herror CPy_SetImage(Hproc_handle proc_handle)        { return HPy_SetImage(proc_handle);        }
+Herror CPy_GetImage(Hproc_handle proc_handle)        { return HPy_GetImage(proc_handle);        }
+Herror CPy_SetPythonTuple(Hproc_handle proc_handle)  { return HPy_SetPythonTuple(proc_handle);  }
+Herror CPy_GetPythonTuple(Hproc_handle proc_handle)  { return HPy_GetPythonTuple(proc_handle);  }
+Herror CPy_SetPythonObject(Hproc_handle proc_handle) { return HPy_SetPythonObject(proc_handle); }
+Herror CPy_GetPythonObject(Hproc_handle proc_handle) { return HPy_GetPythonObject(proc_handle); }
