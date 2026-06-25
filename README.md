@@ -24,8 +24,12 @@ API 接口与现有的 **Halcon_Matlab** 扩展保持一致，仅底层引擎调
 |---|---|
 | [MVTec HALCON](https://www.mvtec.com/halcon) | 需设置 `HALCONROOT` 和 `HALCONEXAMPLES` 环境变量 |
 | CMake ≥ 4.1.1 | |
-| MSVC（Visual Studio 2019+） | 已在 Windows x64 上测试 |
-| 内嵌 Python 3.x | 已包含在 `3rd/python/` 目录下（头文件 + 导入库） |
+| Python 3.x + 开发库 | **系统安装**即可，不限版本（3.10 / 3.11 / 3.12 …） |
+| | Windows: 安装 Python 时勾选 "Add Python to PATH" |
+| | Linux: `apt install python3-dev` |
+| 编译器 | Windows: MSVC（VS 2019+）；Linux: GCC / Clang |
+
+> **Python 版本无关**：扩展使用 Python 稳定 ABI（`Py_LIMITED_API`），编译后可在任意 Python 3.x 上运行，换版本无需重编译。
 
 ---
 
@@ -34,42 +38,48 @@ API 接口与现有的 **Halcon_Matlab** 扩展保持一致，仅底层引擎调
 ```
 Halcon_Python/
 ├── source/
-│   ├── Halcon_Python.cpp   # 核心 C++ 实现（约1000行）
-│   └── Halcon_Python.c     # 精简 C 桥接层
+│   ├── Halcon_Python.cpp   # 核心 C++ 实现
+│   └── Halcon_Python.c     # C 桥接层
 ├── include/
 │   └── Halcon_Python.h     # 公共 C API 头文件
 ├── def/
-│   └── Halcon_Python.def   # HALCON 算子定义（英文/德文）
+│   └── Halcon_Python.def   # HALCON 算子定义
 ├── examples/
-│   ├── python_example.hdev         # 使用 scipy 进行 IV 曲线拟合
-│   └── python_image_example.hdev   # 图像传输示例
-├── help/                   # 预构建的 HALCON 帮助文件
-├── doc/html/               # HTML 参考文档
-├── 3rd/python/             # 内嵌 Python 发行版
-│   ├── include/            # Python C 头文件
-│   └── libs/               # python3x.lib 导入库
-├── bin/                    # 构建输出（DLL + 注册文件）
-├── build/                  # CMake 构建目录
+│   ├── python_example.hdev
+│   ├── python_image_example.hdev
+│   └── python_add3_u16_example.hdev
 ├── CMakeLists.txt
 ├── LICENSE
 └── README.md
 ```
 
+> `build/` `bin/` `doc/html/` 为构建产物，已加入 `.gitignore`。
+
 ---
 
 ## 构建
 
-```bash
-# 1. 创建并进入构建目录
-cmake -B build -S . -G "Visual Studio 17 2022" -A x64
+> **前置条件**：确保已设置 `HALCONROOT` 和 `HALCONEXAMPLES` 环境变量。
+> 系统需安装 **Python 3.x + 开发库**（CMake 会自动检测）。
 
-# 2. 构建（Debug 或 Release）
-cmake --build build --config Debug
+### Windows
+
+```bash
+cmake -B build -S . -G "Visual Studio 17 2022" -A x64
+cmake --build build --config Release
 ```
 
-输出文件位于 `bin/` 目录。CMake 会自动从 `3rd/python/libs/` 检测 `python3x.lib`。
+### Linux
 
-> **注意：** 运行 CMake 前必须设置 `HALCONROOT` 和 `HALCONEXAMPLES` 环境变量。
+```bash
+cmake -B build -S .
+cmake --build build
+```
+
+输出文件位于 `bin/` 目录。CMake 通过 `find_package(Python3)` 自动查找系统 Python。
+
+> **注意**：Windows 上 CMake 会优先链接 `python3.lib`（稳定 ABI → `python3.dll`），
+> 确保扩展可在任意 Python 3.x 版本上运行，而非绑定编译时的特定版本。
 
 ---
 
