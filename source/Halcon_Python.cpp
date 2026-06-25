@@ -18,9 +18,13 @@
  */
 
 #define PY_SSIZE_T_CLEAN
+#define Py_LIMITED_API 0x030a0000   /* Python 3.10 stable ABI — portable across 3.x */
 #include <Python.h>
 
+#ifdef _WIN32
 #include "windows.h"
+#endif
+
 #include "Halcon.h"
 #include "HalconCpp.h"
 #include "HDevThread.h"
@@ -31,12 +35,14 @@
 #include <vector>
 #include <string>
 
-/* DllMain — minimal; can be extended for future diagnostics. */
+#ifdef _WIN32
+/* DllMain — Windows DLL entry point.  Linux shared objects don't need this. */
 BOOL WINAPI DllMain(HINSTANCE hInst, DWORD reason, LPVOID)
 {
     (void)hInst;
     return TRUE;
 }
+#endif
 
 using namespace HalconCpp;
 
@@ -57,7 +63,10 @@ static PyObject* Globals() { return g_globals; }
  * Returns true on success; prints error + returns false on failure. */
 static bool PyExec(const char* code)
 {
-    PyObject* r = PyRun_String(code, Py_file_input, Globals(), Globals());
+    PyObject* co = Py_CompileString(code, "<string>", Py_file_input);
+    if (!co) { PyErr_Print(); return false; }
+    PyObject* r = PyEval_EvalCode(co, Globals(), Globals());
+    Py_DECREF(co);
     if (!r) { PyErr_Print(); return false; }
     Py_DECREF(r);
     return true;
@@ -73,7 +82,7 @@ static Herror PushArray(Hproc_handle proc_handle,
     /* Build Python list in globals */
     PyObject* lst = PyList_New((Py_ssize_t)count);
     for (Py_ssize_t i = 0; i < (Py_ssize_t)count; i++)
-        PyList_SET_ITEM(lst, i, PyFloat_FromDouble(data[i]));
+        PyList_SetItem(lst, i, PyFloat_FromDouble(data[i]));
 
     PyDict_SetItemString(Globals(), "__tmp_arr__", lst);
     Py_DECREF(lst);
@@ -112,14 +121,14 @@ static Herror PullArray(const char* name,
     M = 1; N = 1;
     PyObject* sh = PyDict_GetItemString(Globals(), "__tmp_shape__");
     if (sh && PyList_Check(sh)) {
-        Py_ssize_t ndim = PyList_GET_SIZE(sh);
+        Py_ssize_t ndim = PyList_Size(sh);
         if (ndim == 0) { M = 1; N = 1; }
         else if (ndim == 1) {
             M = 1;
-            N = PyLong_AsLongLong(PyList_GET_ITEM(sh, 0));
+            N = PyLong_AsLongLong(PyList_GetItem(sh, 0));
         } else {
-            M = PyLong_AsLongLong(PyList_GET_ITEM(sh, 0));
-            N = PyLong_AsLongLong(PyList_GET_ITEM(sh, 1));
+            M = PyLong_AsLongLong(PyList_GetItem(sh, 0));
+            N = PyLong_AsLongLong(PyList_GetItem(sh, 1));
         }
     }
 
@@ -129,10 +138,10 @@ static Herror PullArray(const char* name,
         PyExec("del __tmp_flat__, __tmp_shape__");
         return H_ERR_WIPV2;
     }
-    Py_ssize_t total = PyList_GET_SIZE(fl);
+    Py_ssize_t total = PyList_Size(fl);
     out.resize((size_t)total);
     for (Py_ssize_t i = 0; i < total; i++)
-        out[(size_t)i] = PyFloat_AsDouble(PyList_GET_ITEM(fl, i));
+        out[(size_t)i] = PyFloat_AsDouble(PyList_GetItem(fl, i));
 
     PyExec("del __tmp_flat__, __tmp_shape__");
     return H_MSG_TRUE;
@@ -277,7 +286,7 @@ Herror HPy_GetScalar(Hproc_handle proc_handle)
     } else {
         /* String or anything else → convert to str */
         PyObject* s_obj = PyObject_Str(val);
-        const char* s = PyUnicode_AsUTF8(s_obj);
+        const char* s = PyUnicode_AsUTF8AndSize(s_obj, NULL);
         char* tmp;
         HAllocTmp(proc_handle, &tmp, (Hlong)(strlen(s) + 1));
         strcpy(tmp, s);
@@ -301,7 +310,7 @@ Herror HPy_SetArray(Hproc_handle proc_handle)
     HGetSPar(proc_handle, 2, LONG_PAR,   &N,    1);
     HGetSPar(proc_handle, 3, STRING_PAR, &Name, 1);
 
-    Hcpar*  VAL;
+    const Hcpar*  VAL;
     INT4_8  num;
     HGetPPar(proc_handle, 4, &VAL, &num);
 
@@ -362,7 +371,7 @@ Herror HPy_GetArray(Hproc_handle proc_handle)
  * ------------------------------------------------------------------------- */
 Herror HPy_SetVariable(Hproc_handle proc_handle)
 {
-    Hcpar*  dict_par;
+    const Hcpar*  dict_par;
     INT4_8  num;
     HGetPPar(proc_handle, 1, &dict_par, &num);
     HHandle hv_DictHandle((Hlong)dict_par[0].par.h);
@@ -409,7 +418,7 @@ Herror HPy_SetVariable(Hproc_handle proc_handle)
  * ------------------------------------------------------------------------- */
 Herror HPy_GetVariable(Hproc_handle proc_handle)
 {
-    Hcpar*  dict_par;
+    const Hcpar*  dict_par;
     INT4_8  num;
     HGetPPar(proc_handle, 1, &dict_par, &num);
     HHandle hv_DictHandle((Hlong)dict_par[0].par.h);
@@ -611,12 +620,12 @@ static Herror GetImageFromGlobals(const char* varname, HObject& hImageOut)
         return H_ERR_WIPV2;
     }
 
-    const char* dtype_str = PyUnicode_AsUTF8(py_dt);
+    const char* dtype_str = PyUnicode_AsUTF8AndSize(py_dt, NULL);
     INT4_8 ndim  = PyLong_AsLongLong(py_nd);
-    INT4_8 H_img = PyList_GET_SIZE(py_sh) >= 1 ? PyLong_AsLongLong(PyList_GET_ITEM(py_sh, 0)) : 1;
-    INT4_8 W_img = PyList_GET_SIZE(py_sh) >= 2 ? PyLong_AsLongLong(PyList_GET_ITEM(py_sh, 1)) : 1;
-    INT4_8 C_img = (ndim >= 3 && PyList_GET_SIZE(py_sh) >= 3) ?
-                   PyLong_AsLongLong(PyList_GET_ITEM(py_sh, 2)) : 1;
+    INT4_8 H_img = PyList_Size(py_sh) >= 1 ? PyLong_AsLongLong(PyList_GetItem(py_sh, 0)) : 1;
+    INT4_8 W_img = PyList_Size(py_sh) >= 2 ? PyLong_AsLongLong(PyList_GetItem(py_sh, 1)) : 1;
+    INT4_8 C_img = (ndim >= 3 && PyList_Size(py_sh) >= 3) ?
+                   PyLong_AsLongLong(PyList_GetItem(py_sh, 2)) : 1;
 
     /* float64 → float32 (HALCON "real" is 32-bit) */
     if (strcmp(dtype_str, "float64") == 0) {
@@ -703,7 +712,7 @@ cleanup:
  * ------------------------------------------------------------------------- */
 Herror HPy_SetImage(Hproc_handle proc_handle)
 {
-    Hcpar*  dict_par;
+    const Hcpar*  dict_par;
     INT4_8  num;
     HGetPPar(proc_handle, 1, &dict_par, &num);
     HHandle hv_DictHandle((Hlong)dict_par[0].par.h);
@@ -763,7 +772,7 @@ Herror HPy_SetImage(Hproc_handle proc_handle)
  * ------------------------------------------------------------------------- */
 Herror HPy_GetImage(Hproc_handle proc_handle)
 {
-    Hcpar*  dict_par;
+    const Hcpar*  dict_par;
     INT4_8  num;
     HGetPPar(proc_handle, 1, &dict_par, &num);
     HHandle hv_DictHandle((Hlong)dict_par[0].par.h);
@@ -805,7 +814,7 @@ Herror HPy_SetPythonTuple(Hproc_handle proc_handle)
 {
     HAllocStringMem(proc_handle, 1024);
 
-    Hcpar* dict_par; INT4_8 dnum;
+    const Hcpar* dict_par; INT4_8 dnum;
     HGetPPar(proc_handle, 1, &dict_par, &dnum);
     HHandle hv_DictHandle((Hlong)dict_par[0].par.h);
     HTuple  hv_Dict(hv_DictHandle);
@@ -814,7 +823,7 @@ Herror HPy_SetPythonTuple(Hproc_handle proc_handle)
     HGetSPar(proc_handle, 2, STRING_PAR, &keyPar, 1);
     const char* varname = keyPar.par.s;
 
-    Hcpar* valPar; INT4_8 vnum;
+    const Hcpar* valPar; INT4_8 vnum;
     HGetPPar(proc_handle, 3, &valPar, &vnum);
 
     /* Build Python object from the tuple elements */
@@ -836,7 +845,7 @@ Herror HPy_SetPythonTuple(Hproc_handle proc_handle)
                 case STRING_PAR: elem = PyUnicode_FromString(valPar[i].par.s); break;
                 default:         elem = Py_None; Py_INCREF(elem);              break;
             }
-            PyList_SET_ITEM(py_val, (Py_ssize_t)i, elem);
+            PyList_SetItem(py_val, (Py_ssize_t)i, elem);
         }
     }
     PyDict_SetItemString(Globals(), varname, py_val);
@@ -870,7 +879,7 @@ Herror HPy_GetPythonTuple(Hproc_handle proc_handle)
 {
     HAllocStringMem(proc_handle, 1024);
 
-    Hcpar* dict_par; INT4_8 dnum;
+    const Hcpar* dict_par; INT4_8 dnum;
     HGetPPar(proc_handle, 1, &dict_par, &dnum);
     HHandle hv_DictHandle((Hlong)dict_par[0].par.h);
     HTuple  hv_Dict(hv_DictHandle);
@@ -895,7 +904,7 @@ Herror HPy_GetPythonTuple(Hproc_handle proc_handle)
             HPutElem(proc_handle, 1, &d, 1, DOUBLE_PAR);
         } else {
             PyObject* s_obj = PyObject_Str(v);
-            const char* s = PyUnicode_AsUTF8(s_obj);
+            const char* s = PyUnicode_AsUTF8AndSize(s_obj, NULL);
             char* tmp;
             HAllocTmp(proc_handle, &tmp, (Hlong)(strlen(s) + 1));
             strcpy(tmp, s);
@@ -907,12 +916,12 @@ Herror HPy_GetPythonTuple(Hproc_handle proc_handle)
     HTuple hv_Value;
 
     if (PyList_Check(val) || PyTuple_Check(val)) {
-        Py_ssize_t n = PyList_Check(val) ? PyList_GET_SIZE(val) : PyTuple_GET_SIZE(val);
+        Py_ssize_t n = PyList_Check(val) ? PyList_Size(val) : PyTuple_Size(val);
         std::vector<double>  dvals;
         std::vector<INT4_8>  lvals;
         bool all_int = true, all_num = true;
         for (Py_ssize_t i = 0; i < n; i++) {
-            PyObject* item = PyList_Check(val) ? PyList_GET_ITEM(val, i) : PyTuple_GET_ITEM(val, i);
+            PyObject* item = PyList_Check(val) ? PyList_GetItem(val, i) : PyTuple_GetItem(val, i);
             if (PyFloat_Check(item)) { all_int = false; }
             else if (!PyLong_Check(item)) { all_int = false; all_num = false; }
         }
@@ -920,7 +929,7 @@ Herror HPy_GetPythonTuple(Hproc_handle proc_handle)
             INT4_8* buf;
             HAllocTmp(proc_handle, &buf, (Hlong)(n * sizeof(INT4_8)));
             for (Py_ssize_t i = 0; i < n; i++) {
-                PyObject* item = PyList_Check(val) ? PyList_GET_ITEM(val, i) : PyTuple_GET_ITEM(val, i);
+                PyObject* item = PyList_Check(val) ? PyList_GetItem(val, i) : PyTuple_GetItem(val, i);
                 buf[i] = PyLong_AsLongLong(item);
                 hv_Value.Append((Hlong)buf[i]);
             }
@@ -929,7 +938,7 @@ Herror HPy_GetPythonTuple(Hproc_handle proc_handle)
             double* buf;
             HAllocTmp(proc_handle, &buf, (Hlong)(n * sizeof(double)));
             for (Py_ssize_t i = 0; i < n; i++) {
-                PyObject* item = PyList_Check(val) ? PyList_GET_ITEM(val, i) : PyTuple_GET_ITEM(val, i);
+                PyObject* item = PyList_Check(val) ? PyList_GetItem(val, i) : PyTuple_GetItem(val, i);
                 buf[i] = PyFloat_Check(item) ? PyFloat_AsDouble(item) : (double)PyLong_AsLongLong(item);
                 hv_Value.Append(buf[i]);
             }
@@ -943,7 +952,7 @@ Herror HPy_GetPythonTuple(Hproc_handle proc_handle)
             HPutElem(proc_handle, 1, &tmp, 1, STRING_PAR);
         } else {
             /* mixed or string list → return first element as scalar */
-            putSingle(PyList_Check(val) ? PyList_GET_ITEM(val, 0) : PyTuple_GET_ITEM(val, 0));
+            putSingle(PyList_Check(val) ? PyList_GetItem(val, 0) : PyTuple_GetItem(val, 0));
         }
     } else {
         putSingle(val);
@@ -953,7 +962,7 @@ Herror HPy_GetPythonTuple(Hproc_handle proc_handle)
             hv_Value.Append(PyFloat_AsDouble(val));
         else {
             PyObject* s_obj = PyObject_Str(val);
-            hv_Value.Append(HTuple(PyUnicode_AsUTF8(s_obj)));
+            hv_Value.Append(HTuple(PyUnicode_AsUTF8AndSize(s_obj, NULL)));
             Py_DECREF(s_obj);
         }
     }
@@ -981,7 +990,7 @@ Herror HPy_SetPythonObject(Hproc_handle proc_handle)
     HObject hImage(obj_key);
 
     /* 2. Get control parameters */
-    Hcpar* dict_par; INT4_8 dnum;
+    const Hcpar* dict_par; INT4_8 dnum;
     HGetPPar(proc_handle, 1, &dict_par, &dnum);
     HHandle hv_DictHandle((Hlong)dict_par[0].par.h);
     HTuple  hv_Dict(hv_DictHandle);
@@ -1009,7 +1018,7 @@ Herror HPy_GetPythonObject(Hproc_handle proc_handle)
     HAllocStringMem(proc_handle, 512);
 
     /* 1. Get control parameters */
-    Hcpar* dict_par; INT4_8 dnum;
+    const Hcpar* dict_par; INT4_8 dnum;
     HGetPPar(proc_handle, 1, &dict_par, &dnum);
     HHandle hv_DictHandle((Hlong)dict_par[0].par.h);
     HTuple  hv_Dict(hv_DictHandle);
@@ -1070,7 +1079,7 @@ Herror HPy_GetOutput(Hproc_handle proc_handle)
     const char* output = "";
     PyObject* out_obj = PyDict_GetItemString(Globals(), "__tmp_out__");
     if (out_obj && PyUnicode_Check(out_obj))
-        output = PyUnicode_AsUTF8(out_obj);
+        output = PyUnicode_AsUTF8AndSize(out_obj, NULL);
 
     char* tmp;
     HAllocTmp(proc_handle, &tmp, (Hlong)(strlen(output) + 1));

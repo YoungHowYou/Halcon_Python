@@ -12,7 +12,11 @@
 #  endif
 #endif
 
+#ifdef _WIN32
 #define HPy_EXPORTS_API __declspec(dllexport)
+#else
+#define HPy_EXPORTS_API __attribute__((visibility("default")))
+#endif
 
 #ifdef __cplusplus
 extern "C" {

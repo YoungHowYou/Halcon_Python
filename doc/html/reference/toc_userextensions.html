@@ -1104,6 +1104,14 @@ toggleLanguage(new_lang,1);return;}
 <dd>Read (and clear) the Python stdout capture buffer.</dd>
 </dl>
 <dl>
+<dt><a href="Py_GetPythonObject.html"><code><span data-if="hdevelop" style="display:inline;">Py_GetPythonObject</span><span data-if="dotnet" style="display:none;">PyGetPythonObject</span><span data-if="python" style="display:none;">Py_GetPythonObject</span><span data-if="cpp" style="display:none;">PyGetPythonObject</span><span data-if="c" style="display:none;">Py_GetPythonObject</span></code></a></dt>
+<dd>Read a Python numpy array as a HALCON image and store it in the dict.</dd>
+</dl>
+<dl>
+<dt><a href="Py_GetPythonTuple.html"><code><span data-if="hdevelop" style="display:inline;">Py_GetPythonTuple</span><span data-if="dotnet" style="display:none;">PyGetPythonTuple</span><span data-if="python" style="display:none;">Py_GetPythonTuple</span><span data-if="cpp" style="display:none;">PyGetPythonTuple</span><span data-if="c" style="display:none;">Py_GetPythonTuple</span></code></a></dt>
+<dd>Get a Python variable as a HALCON tuple and store it in the dict.</dd>
+</dl>
+<dl>
 <dt><a href="Py_GetScalar.html"><code><span data-if="hdevelop" style="display:inline;">Py_GetScalar</span><span data-if="dotnet" style="display:none;">PyGetScalar</span><span data-if="python" style="display:none;">Py_GetScalar</span><span data-if="cpp" style="display:none;">PyGetScalar</span><span data-if="c" style="display:none;">Py_GetScalar</span></code></a></dt>
 <dd>Get a scalar variable from the Python interpreter.</dd>
 </dl>
@@ -1126,6 +1134,14 @@ toggleLanguage(new_lang,1);return;}
 <dl>
 <dt><a href="Py_SetImage.html"><code><span data-if="hdevelop" style="display:inline;">Py_SetImage</span><span data-if="dotnet" style="display:none;">PySetImage</span><span data-if="python" style="display:none;">Py_SetImage</span><span data-if="cpp" style="display:none;">PySetImage</span><span data-if="c" style="display:none;">Py_SetImage</span></code></a></dt>
 <dd>Pass HALCON images stored in a dict to Python as numpy arrays (via ctypes, zero-copy read).</dd>
+</dl>
+<dl>
+<dt><a href="Py_SetPythonObject.html"><code><span data-if="hdevelop" style="display:inline;">Py_SetPythonObject</span><span data-if="dotnet" style="display:none;">PySetPythonObject</span><span data-if="python" style="display:none;">Py_SetPythonObject</span><span data-if="cpp" style="display:none;">PySetPythonObject</span><span data-if="c" style="display:none;">Py_SetPythonObject</span></code></a></dt>
+<dd>Transfer a HALCON image to Python as a numpy array and store it in the dict.</dd>
+</dl>
+<dl>
+<dt><a href="Py_SetPythonTuple.html"><code><span data-if="hdevelop" style="display:inline;">Py_SetPythonTuple</span><span data-if="dotnet" style="display:none;">PySetPythonTuple</span><span data-if="python" style="display:none;">Py_SetPythonTuple</span><span data-if="cpp" style="display:none;">PySetPythonTuple</span><span data-if="c" style="display:none;">Py_SetPythonTuple</span></code></a></dt>
+<dd>Set a Python variable from a HALCON tuple and store it in the dict.</dd>
 </dl>
 <dl>
 <dt><a href="Py_SetScalar.html"><code><span data-if="hdevelop" style="display:inline;">Py_SetScalar</span><span data-if="dotnet" style="display:none;">PySetScalar</span><span data-if="python" style="display:none;">Py_SetScalar</span><span data-if="cpp" style="display:none;">PySetScalar</span><span data-if="c" style="display:none;">Py_SetScalar</span></code></a></dt>

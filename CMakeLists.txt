@@ -70,15 +70,36 @@ HALCON_AddExtensionPackage(Halcon_Python
 # ── HALCON paths ──────────────────────────────────────────────────────────────
 set(HALCON_ROOT         $ENV{HALCONROOT})
 set(HALCON_INCLUDE_DIR  ${HALCON_ROOT}/include/halconcpp)
-set(HALCON_LIB_DIR      ${HALCON_ROOT}/lib/x64-win64)
 
-# ── Embedded Python paths (3rd/python) ───────────────────────────────────────
-set(PYTHON_ROOT         "${CMAKE_CURRENT_SOURCE_DIR}/3rd/python")
-set(PYTHON_INCLUDE_DIR  "${PYTHON_ROOT}/include")
-set(PYTHON_LIBRARY_DIR  "${PYTHON_ROOT}/libs")
+# Platform-dependent HALCON library path and naming
+if(WIN32)
+    set(HALCON_ARCH_DIR      x64-win64)
+    set(HALCON_LIB_SUFFIX    .lib)
+elseif(UNIX)
+    set(HALCON_ARCH_DIR      x64-linux)
+    set(HALCON_LIB_SUFFIX    "")
+endif()
+set(HALCON_LIB_DIR  ${HALCON_ROOT}/lib/${HALCON_ARCH_DIR})
 
-message(STATUS "Python include: ${PYTHON_INCLUDE_DIR}")
-message(STATUS "Python libs:    ${PYTHON_LIBRARY_DIR}")
+# ── Python — find system Python 3.x (cross-platform) ─────────────────────────
+# Uses the stable ABI (Py_LIMITED_API) so any Python 3.x version works.
+find_package(Python3 REQUIRED COMPONENTS Development)
+message(STATUS "Python version:  ${Python3_VERSION}")
+message(STATUS "Python include:  ${Python3_INCLUDE_DIRS}")
+
+# On Windows, force python3.lib (stable ABI → python3.dll) instead of the
+# version-specific python3xx.lib that find_package returns.
+if(WIN32)
+    set(PYTHON_LIB "${Python3_LIBRARY_DIRS}/python3.lib")
+    if(NOT EXISTS "${PYTHON_LIB}")
+        message(WARNING "python3.lib not found, falling back to ${Python3_LIBRARIES}")
+        message(WARNING "The extension will be tied to Python ${Python3_VERSION}")
+        set(PYTHON_LIB "${Python3_LIBRARIES}")
+    endif()
+else()
+    set(PYTHON_LIB "${Python3_LIBRARIES}")
+endif()
+message(STATUS "Python lib:     ${PYTHON_LIB}")
 
 # ── Additional project headers ────────────────────────────────────────────────
 file(GLOB_RECURSE PROJECT_HEADERS "${CMAKE_CURRENT_SOURCE_DIR}/include/*.h")
@@ -89,27 +110,21 @@ target_include_directories(${ProjectName}
     PUBLIC
         $<BUILD_INTERFACE:${HALCON_INCLUDE_DIR}>
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
-        $<BUILD_INTERFACE:${PYTHON_INCLUDE_DIR}>
+        $<BUILD_INTERFACE:${Python3_INCLUDE_DIRS}>
 )
 
 # ── Link libraries ────────────────────────────────────────────────────────────
-target_link_directories(${ProjectName} PRIVATE ${PYTHON_LIBRARY_DIR})
-
-# Detect python3x.lib automatically
-file(GLOB PYTHON_LIBS "${PYTHON_LIBRARY_DIR}/python3*.lib")
-if(NOT PYTHON_LIBS)
-    message(WARNING "No python3*.lib found in ${PYTHON_LIBRARY_DIR}")
-endif()
-
 target_link_libraries(${ProjectName}
-    ${HALCON_LIB_DIR}/halconcpp.lib
-    ${PYTHON_LIBS}
+    ${HALCON_LIB_DIR}/halconcpp${HALCON_LIB_SUFFIX}
+    ${PYTHON_LIB}
 )
 
 # ── Compiler options ──────────────────────────────────────────────────────────
 if(MSVC)
     target_compile_options(${ProjectName} PRIVATE /W3 /bigobj)
     set_property(TARGET ${ProjectName} PROPERTY MSVC_RUNTIME_LIBRARY "MultiThreadedDLL")
+elseif(UNIX)
+    target_compile_options(${ProjectName} PRIVATE -Wall -fPIC)
 endif()
 
 message(STATUS "Halcon_Python extension configured.")

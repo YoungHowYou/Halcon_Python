@@ -3,7 +3,7 @@
 <head>
 <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
-<title>Class HHalconPython [HALCON Operator Reference / Version 24.11.1.0]</title>
+<title>Py_SetPythonTuple [HALCON Operator Reference / Version 24.11.1.0]</title>
 <style type="text/css">
 
       body {
@@ -1068,7 +1068,7 @@ toggleLanguage(new_lang,1);return;}
 <div class="breadcrumb">
 <br class="inv"><a href="../../../../documentation.html">HALCON
 
-      24.11.1.0</a> / <a href="index.html">HALCON Operator Reference</a> / <a href="index_classes.html">Classes</a><br class="inv">
+      24.11.1.0</a> / <a href="index.html">HALCON Operator Reference</a> / <a href="toc_userextensions.html">UserExtensions</a><br class="inv">
 </div>
 <div class="body_main">
 <div class="tabbar"><ul class="tabs">
@@ -1081,103 +1081,60 @@ toggleLanguage(new_lang,1);return;}
 <div class="indexlink">
 <a href="index_classes.html"><span data-if="dotnet" style="display:none;">Classes</span><span data-if="cpp" style="display:none;">Classes</span></a><span data-if="dotnet" style="display:none;"> | </span><span data-if="cpp" style="display:none;"> | </span><a href="index_by_name.html">Operators</a>
 </div>
-<div data-if="hdevelop" style="display:inline"><p>Use the tabs on the upper right to switch to a different programming language.</p></div>
-<div data-if="c" style="display:none"><p>Use the tabs on the upper right to switch to a different programming language.</p></div>
-<div data-if="dotnet" style="display:none">
-<h1>HHalconPython (Class)</h1>
+<!--OP_REF_HEADER_END-->
+<h1 id="sec_name">
+<span data-if="hdevelop" style="display:inline;">Py_SetPythonTuple</span><span data-if="c" style="display:none;">T_Py_SetPythonTuple</span><span data-if="cpp" style="display:none;">PySetPythonTuple</span><span data-if="dotnet" style="display:none;">PySetPythonTuple</span><span data-if="python" style="display:none;">Py_SetPythonTuple</span> (Operator)</h1>
 <h2>Name</h2>
-<p><code>HHalconPython</code> — &lt;no description&gt;</p>
-      <h2>Methods</h2>
-<table>
-        <tr>
-<td><code><a href="Py_EvalString.html">PyEvalString</a></code></td>
-<td>  </td>
-<td>Execute a Python code string in the interpreter.</td>
-</tr>
-        <tr>
-<td><code><a href="Py_Finalize.html">PyFinalize</a></code></td>
-<td>  </td>
-<td>Finalize the embedded Python interpreter.</td>
-</tr>
-        <tr>
-<td><code><a href="Py_GetArray.html">PyGetArray</a></code></td>
-<td>  </td>
-<td>Get a numpy array from the Python interpreter and return its shape and flat values.</td>
-</tr>
-        <tr>
-<td><code><a href="Py_GetImage.html">PyGetImage</a></code></td>
-<td>  </td>
-<td>Read numpy arrays from Python and write them as HALCON image objects into a dict.</td>
-</tr>
-        <tr>
-<td><code><a href="Py_GetOutput.html">PyGetOutput</a></code></td>
-<td>  </td>
-<td>Read (and clear) the Python stdout capture buffer.</td>
-</tr>
-        <tr>
-<td><code><a href="Py_GetPythonObject.html">PyGetPythonObject</a></code></td>
-<td>  </td>
-<td>Read a Python numpy array as a HALCON image and store it in the dict.</td>
-</tr>
-        <tr>
-<td><code><a href="Py_GetPythonTuple.html">PyGetPythonTuple</a></code></td>
-<td>  </td>
-<td>Get a Python variable as a HALCON tuple and store it in the dict.</td>
-</tr>
-        <tr>
-<td><code><a href="Py_GetScalar.html">PyGetScalar</a></code></td>
-<td>  </td>
-<td>Get a scalar variable from the Python interpreter.</td>
-</tr>
-        <tr>
-<td><code><a href="Py_GetVariable.html">PyGetVariable</a></code></td>
-<td>  </td>
-<td>Read numpy arrays from Python and write them as HALCON matrix handles into a dict.</td>
-</tr>
-        <tr>
-<td><code><a href="Py_Import.html">PyImport</a></code></td>
-<td>  </td>
-<td>Import a Python module into the interpreter namespace.</td>
-</tr>
-        <tr>
-<td><code><a href="Py_Initialize.html">PyInitialize</a></code></td>
-<td>  </td>
-<td>Initialize the embedded Python interpreter.</td>
-</tr>
-        <tr>
-<td><code><a href="Py_SetArray.html">PySetArray</a></code></td>
-<td>  </td>
-<td>Set an M x N matrix in the Python interpreter as a numpy array.</td>
-</tr>
-        <tr>
-<td><code><a href="Py_SetImage.html">PySetImage</a></code></td>
-<td>  </td>
-<td>Pass HALCON images stored in a dict to Python as numpy arrays (via ctypes, zero-copy read).</td>
-</tr>
-        <tr>
-<td><code><a href="Py_SetPythonObject.html">PySetPythonObject</a></code></td>
-<td>  </td>
-<td>Transfer a HALCON image to Python as a numpy array and store it in the dict.</td>
-</tr>
-        <tr>
-<td><code><a href="Py_SetPythonTuple.html">PySetPythonTuple</a></code></td>
-<td>  </td>
-<td>Set a Python variable from a HALCON tuple and store it in the dict.</td>
-</tr>
-        <tr>
-<td><code><a href="Py_SetScalar.html">PySetScalar</a></code></td>
-<td>  </td>
-<td>Set a scalar variable (int / float / string) in the Python interpreter.</td>
-</tr>
-        <tr>
-<td><code><a href="Py_SetVariable.html">PySetVariable</a></code></td>
-<td>  </td>
-<td>Pass HALCON matrix handles stored in a dict to Python as numpy arrays.</td>
-</tr>
-      </table>
-    </div>
-<div data-if="cpp" style="display:none"><p>Use the tabs on the upper right to switch to a different programming language.</p></div>
-<div data-if="python" style="display:none"><p>Use the tabs on the upper right to switch to a different programming language.</p></div>
+<p><code><span data-if="hdevelop" style="display:inline;">Py_SetPythonTuple</span><span data-if="c" style="display:none;">T_Py_SetPythonTuple</span><span data-if="cpp" style="display:none;">PySetPythonTuple</span><span data-if="dotnet" style="display:none;">PySetPythonTuple</span><span data-if="python" style="display:none;">Py_SetPythonTuple</span></code> — Set a Python variable from a HALCON tuple and store it in the dict.</p>
+<h2 id="sec_synopsis">Signature</h2>
+<div data-if="hdevelop" style="display:inline;">
+<p>
+<code><b>Py_SetPythonTuple</b>( :  : <a href="#DictHandle"><i>DictHandle</i></a>, <a href="#Key"><i>Key</i></a>, <a href="#Value"><i>Value</i></a> : )</code></p>
+</div>
+<div data-if="c" style="display:none;">
+<p>
+<code>Herror <b>T_Py_SetPythonTuple</b>(const Htuple <a href="#DictHandle"><i>DictHandle</i></a>, const Htuple <a href="#Key"><i>Key</i></a>, const Htuple <a href="#Value"><i>Value</i></a>)</code></p>
+</div>
+<div data-if="cpp" style="display:none;">
+<p>
+<code>void <b>PySetPythonTuple</b>(const HTuple&amp; <a href="#DictHandle"><i>DictHandle</i></a>, const HTuple&amp; <a href="#Key"><i>Key</i></a>, const HTuple&amp; <a href="#Value"><i>Value</i></a>)</code></p>
+</div>
+<div data-if="dotnet" style="display:none;">
+<p>
+<code>static void <a href="HHalconPython.html">HHalconPython</a>.<b>PySetPythonTuple</b>(<a href="HTuple.html">HTuple</a> <a href="#DictHandle"><i>dictHandle</i></a>, <a href="HTuple.html">HTuple</a> <a href="#Key"><i>key</i></a>, <a href="HTuple.html">HTuple</a> <a href="#Value"><i>value</i></a>)</code></p>
+</div>
+<div data-if="python" style="display:none;">
+<p>
+<code>def <b>Py_SetPythonTuple</b>(<a href="#DictHandle"><i>dict_handle</i></a>: HHandle, <a href="#Key"><i>key</i></a>: str, <a href="#Value"><i>value</i></a>: Sequence[Union[float, int, str]]) -&gt; None</code></p>
+</div>
+<h2 id="sec_execution">Execution Information</h2>
+<ul>
+  <li>Multithreading type: reentrant (runs in parallel with non-exclusive operators).</li>
+<li>Multithreading scope: global (may be called from any thread).</li>
+  <li>Processed without parallelization.</li>
+</ul>
+<h2 id="sec_parameters">Parameters</h2>
+  <div class="par">
+<div class="parhead">
+<span id="DictHandle" class="parname"><b><code><span data-if="hdevelop" style="display:inline">DictHandle</span><span data-if="c" style="display:none">DictHandle</span><span data-if="cpp" style="display:none">DictHandle</span><span data-if="dotnet" style="display:none">dictHandle</span><span data-if="python" style="display:none">dict_handle</span></code></b> (input_control)  </span><span>handle <code>→</code> <span data-if="dotnet" style="display:none">HTuple</span><span data-if="python" style="display:none">HHandle</span><span data-if="cpp" style="display:none">HTuple</span><span data-if="c" style="display:none">Htuple</span><span data-if="hdevelop" style="display:inline"> (handle)</span><span data-if="dotnet" style="display:none"> (<i>IntPtr</i>)</span><span data-if="cpp" style="display:none"> (<i>HHandle</i>)</span><span data-if="c" style="display:none"> (<i>handle</i>)</span></span>
+</div>
+<p class="pardesc"></p>
+</div>
+  <div class="par">
+<div class="parhead">
+<span id="Key" class="parname"><b><code><span data-if="hdevelop" style="display:inline">Key</span><span data-if="c" style="display:none">Key</span><span data-if="cpp" style="display:none">Key</span><span data-if="dotnet" style="display:none">key</span><span data-if="python" style="display:none">key</span></code></b> (input_control)  </span><span>string <code>→</code> <span data-if="dotnet" style="display:none">HTuple</span><span data-if="python" style="display:none">str</span><span data-if="cpp" style="display:none">HTuple</span><span data-if="c" style="display:none">Htuple</span><span data-if="hdevelop" style="display:inline"> (string)</span><span data-if="dotnet" style="display:none"> (<i>string</i>)</span><span data-if="cpp" style="display:none"> (<i>HString</i>)</span><span data-if="c" style="display:none"> (<i>char*</i>)</span></span>
+</div>
+<p class="pardesc"></p>
+</div>
+  <div class="par">
+<div class="parhead">
+<span id="Value" class="parname"><b><code><span data-if="hdevelop" style="display:inline">Value</span><span data-if="c" style="display:none">Value</span><span data-if="cpp" style="display:none">Value</span><span data-if="dotnet" style="display:none">value</span><span data-if="python" style="display:none">value</span></code></b> (input_control)  </span><span>number-array <code>→</code> <span data-if="dotnet" style="display:none">HTuple</span><span data-if="python" style="display:none">Sequence[Union[float, int, str]]</span><span data-if="cpp" style="display:none">HTuple</span><span data-if="c" style="display:none">Htuple</span><span data-if="hdevelop" style="display:inline"> (real / </span><span data-if="hdevelop" style="display:inline">integer / </span><span data-if="hdevelop" style="display:inline">string)</span><span data-if="dotnet" style="display:none"> (<i>double</i> / </span><span data-if="dotnet" style="display:none">int / </span><span data-if="dotnet" style="display:none">long / </span><span data-if="dotnet" style="display:none">string)</span><span data-if="cpp" style="display:none"> (<i>double</i> / </span><span data-if="cpp" style="display:none">Hlong / </span><span data-if="cpp" style="display:none">HString)</span><span data-if="c" style="display:none"> (<i>double</i> / </span><span data-if="c" style="display:none">Hlong / </span><span data-if="c" style="display:none">char*)</span></span>
+</div>
+<p class="pardesc"></p>
+</div>
+<h2 id="sec_module">Module</h2>
+<p>
+Foundation</p>
 <!--OP_REF_FOOTER_START-->
 <hr>
 <div class="indexlink">
